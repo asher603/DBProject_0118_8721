@@ -4,7 +4,7 @@ import os
 
 # --- Configuration: Rich Lists for realistic data ---
 START_DT = date(2022, 1, 1)
-END_DT = date(2026, 3, 17)
+END_DT = date(2026, 1, 1)
 
 # Expanded list of medical diagnoses
 DIAGNOSES = [
