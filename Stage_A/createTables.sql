@@ -1,0 +1,114 @@
+CREATE TABLE PATIENTS
+(
+  Patient_ID INT NOT NULL,
+  First_Name VARCHAR(50) NOT NULL,
+  Last_Name VARCHAR(50) NOT NULL,
+  Date_Of_Birth DATE NOT NULL,
+  Phone_Number VARCHAR(20) NOT NULL,
+  Address VARCHAR(255) NOT NULL,
+  PRIMARY KEY (Patient_ID)
+);
+
+CREATE TABLE DEPARTMENTS
+(
+  Department_ID INT NOT NULL,
+  Department_Name VARCHAR(100) NOT NULL,
+  PRIMARY KEY (Department_ID)
+);
+
+CREATE TABLE STAFF
+(
+  Employee_ID INT NOT NULL,
+  First_Name VARCHAR(50) NOT NULL,
+  Last_Name VARCHAR(50) NOT NULL,
+  Role VARCHAR(50) NOT NULL,
+  Department_ID INT NOT NULL,
+  PRIMARY KEY (Employee_ID),
+  FOREIGN KEY (Department_ID) REFERENCES DEPARTMENTS(Department_ID)
+);
+
+CREATE TABLE ROOMS
+(
+  Room_ID INT NOT NULL,
+  Room_Number VARCHAR(20) NOT NULL,
+  Room_Type VARCHAR(50) NOT NULL,
+  Department_ID INT NOT NULL,
+  PRIMARY KEY (Room_ID),
+  FOREIGN KEY (Department_ID) REFERENCES DEPARTMENTS(Department_ID)
+);
+
+CREATE TABLE BEDS
+(
+  Bed_ID INT NOT NULL,
+  Bed_Number VARCHAR(20) NOT NULL,
+  Room_ID INT NOT NULL,
+  PRIMARY KEY (Bed_ID),
+  FOREIGN KEY (Room_ID) REFERENCES ROOMS(Room_ID)
+);
+
+CREATE TABLE APPOINTMENTS
+(
+  Appointment_ID INT NOT NULL,
+  Appointment_Date DATE NOT NULL,
+  Patient_ID INT NOT NULL,
+  Employee_ID INT NOT NULL,
+  Room_ID INT NOT NULL,
+  PRIMARY KEY (Appointment_ID),
+  FOREIGN KEY (Patient_ID) REFERENCES PATIENTS(Patient_ID),
+  FOREIGN KEY (Employee_ID) REFERENCES STAFF(Employee_ID),
+  FOREIGN KEY (Room_ID) REFERENCES ROOMS(Room_ID)
+);
+
+CREATE TABLE VISITS
+(
+  Visit_ID INT NOT NULL,
+  Visit_Date DATE NOT NULL,
+  Diagnosis VARCHAR(255) NOT NULL,
+  Patient_ID INT NOT NULL,
+  Employee_ID INT NOT NULL,
+  PRIMARY KEY (Visit_ID),
+  FOREIGN KEY (Patient_ID) REFERENCES PATIENTS(Patient_ID),
+  FOREIGN KEY (Employee_ID) REFERENCES STAFF(Employee_ID)
+);
+
+CREATE TABLE MEDICATIONS
+(
+  Medication_ID INT NOT NULL,
+  Medication_Name VARCHAR(100) NOT NULL,
+  PRIMARY KEY (Medication_ID)
+);
+
+CREATE TABLE PRESCRIPTIONS
+(
+  Prescription_ID INT NOT NULL,
+  Dosage VARCHAR(50) NOT NULL,
+  Visit_ID INT NOT NULL,
+  Medication_ID INT NOT NULL,
+  PRIMARY KEY (Prescription_ID),
+  FOREIGN KEY (Visit_ID) REFERENCES VISITS(Visit_ID),
+  FOREIGN KEY (Medication_ID) REFERENCES MEDICATIONS(Medication_ID)
+);
+
+CREATE TABLE INPATIENT_ADMISSIONS
+(
+  Admission_ID INT NOT NULL,
+  Admission_Date DATE NOT NULL,
+  Discharge_Date DATE NOT NULL,
+  Patient_ID INT NOT NULL,
+  Bed_ID INT NOT NULL,
+  PRIMARY KEY (Admission_ID),
+  FOREIGN KEY (Patient_ID) REFERENCES PATIENTS(Patient_ID),
+  FOREIGN KEY (Bed_ID) REFERENCES BEDS(Bed_ID),
+  CONSTRAINT chk_dates CHECK (Discharge_Date >= Admission_Date)
+);
+
+CREATE TABLE INVOICES
+(
+  Invoice_ID INT NOT NULL,
+  Total_Amount NUMERIC(10,2) NOT NULL,
+  Billing_Date DATE NOT NULL,
+  Patient_ID INT NOT NULL,
+  PRIMARY KEY (Invoice_ID),
+  FOREIGN KEY (Patient_ID) REFERENCES PATIENTS(Patient_ID),
+  CONSTRAINT chk_amount CHECK (Total_Amount >= 0)
+);
