@@ -49,7 +49,9 @@ $RECYCLE.BIN/
 
 # === PostgreSQL & Database Tools ===
 # Ignore database backups, dumps, and pgAdmin logs/credentials
-*.backup
+
+# uncomment the following line if you want to ignore .backup files
+#*.backup
 *.dump
 *.sql.gz
 *.sql.zip

@@ -82,31 +82,36 @@ The system consists of 11 primary entities:
 We utilized three distinct methods to populate the database with over 40,000 combined records:
 
 1. **Mockaroo (folder: `mockarooFiles`):** Used to generate data for **Patients**, **Staff**, and **Medications**.
-   *Example of this method:* ![Mockaroo Setup](images/data_generation_methods/generating_patients_data_using_mockaroo.png)
+   *Example of this method:* ![Mockaroo Setup](images/data_generation_methods/from_mockaroo/generating_patients_data_using_mockaroo.png)
 
-2. **Python Programming (folder: `Programming`):** A custom Python script was developed to generate data for **Rooms**, **Beds**, **Inpatient_Admissions**, **Visits**, **Invoices**, and **Prescriptions**.  
-   *Example of this method:* ![Python Script](images/data_generation_methods/generating_rooms_data_using_script.png)
+2. **Python Programming (folder: `Programming`):** A Python script was developed to generate data for **Rooms**, **Beds**, **Inpatient_Admissions**, **Visits**, **Invoices**, and **Prescriptions**.  
+   *Example of this method:* ![Python Script](images/data_generation_methods/from_pyhton_script/generating_rooms_data_using_script.png)
 
-3. **Manual Inserts (folder: `manualInserts`):** Used to generate data for **Departments** 
-   ![Manual Inserts](images/data_generation_methods/manual_insert.png)
+3. **Data Import via CSV (folder: `DATAIMPORTFILES`):** A Python script was developed to create data for **DEPARTMENTS** and **INPATIENT_ADMISSIONS** as a csv file which was then used to create the sql file containing the insert commands.
+   *Example of this method:* ![Generate CSV Files](images/data_generation_methods/from_csv/generate_csv_files.png)
+   ![Convert CSV to SQL](images/data_generation_methods/from_csv/convert_csv_to_sql.png)
 
 **Data Volume Statistics:**
 * **Patients Table**: 20,000 records.
 * **Visits Table**: 20,000 records.
-* **Other Tables**: At least 500 records each.
+* **Rooms Table**: 100 records.
+* **Departments Table**: 6 records.
+* **Other Tables**: 500 records.
 
 ---
 
 ## Backup and Recovery
-A full database backup was performed using pgAdmin 4 to ensure data safety and portability.
+The database was fully backed up using the pgAdmin 4 Backup tool in **Custom** format to ensure data portability and integrity.
 
 ### Backup Execution:
-The backup was created in **Custom** format with the filename `backup_2026_03_17.backup`.
-* **Backup Settings:** ![Backup Settings](images/db_backup/setting_the_options_for_the_backup.png)
-* **Successful Completion:** ![Backup Confirmation](images/db_backup/confirnation_of_backup_creation.png)
+The backup file was saved as `backup_2026_03_18.backup`.
+* **pgAdmin Backup Settings:** ![Backup Settings](images/db_backup/backup/setting_the_options_for_the_backup.png)
+* **Backup Creation Confirmation:** ![Backup Confirmation](images/db_backup/backup/confirnation_of_backup_creation.png)
 
 ### Restore Verification:
-The backup was successfully restored to a clean test environment (`Hospital_Test`) to verify data and schema integrity.
-> [Insert Screenshot of pgAdmin Restore process/success here]
+The restoration process was successfully performed on a separate machine within a clean test environment (`Hospital_Test`) to ensure system recoverability in case of failure.
+* **Restore Success Confirmation:** ![Restore Success](images/db_backup/restore/restore_success.jpeg)
+* **Post-Restore Data Validation:** A `SELECT` query was executed on the Patients table to verify the integrity of the restored data.  
+  ![Restore Verification](images/db_backup/restore/restore_verification.jpeg)
 
 ---

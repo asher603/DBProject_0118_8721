@@ -7,17 +7,24 @@ root_dir = os.path.dirname(os.path.abspath(__file__))
 # Define the exact relative paths for each file based on the directory structure.
 # The order is strictly maintained to prevent Foreign Key constraint violations.
 files_to_merge = [
-    os.path.join(root_dir, 'manualInserts', 'DEPARTMENTS.sql'),
+    # Level 0: Independent tables (no foreign keys)
+    os.path.join(root_dir, 'DataImportFiles', 'DEPARTMENTS.sql'),
     os.path.join(root_dir, 'mockarooFiles', 'PATIENTS.sql'),
     os.path.join(root_dir, 'mockarooFiles', 'MEDICATIONS.sql'),
-    os.path.join(root_dir, 'mockarooFiles', 'STAFF.sql'),
-    os.path.join(root_dir, 'Programming', 'ROOMS.sql'),
-    os.path.join(root_dir, 'Programming', 'BEDS.sql'),
-    os.path.join(root_dir, 'Programming', 'VISITS.sql'),
-    os.path.join(root_dir, 'Programming', 'INVOICES.sql'),
-    os.path.join(root_dir, 'Programming', 'APPOINTMENTS.sql'),
-    os.path.join(root_dir, 'Programming', 'INPATIENT_ADMISSIONS.sql'),
-    os.path.join(root_dir, 'Programming', 'PRESCRIPTIONS.sql')
+
+    # Level 1: Tables depending on Level 0
+    os.path.join(root_dir, 'mockarooFiles', 'STAFF.sql'),       # Depends on DEPARTMENTS
+    os.path.join(root_dir, 'Programming', 'ROOMS.sql'),        # Depends on DEPARTMENTS
+    os.path.join(root_dir, 'Programming', 'INVOICES.sql'),     # Depends on PATIENTS
+
+    # Level 2: Tables depending on Level 1
+    os.path.join(root_dir, 'Programming', 'BEDS.sql'),         # Depends on ROOMS
+    os.path.join(root_dir, 'Programming', 'VISITS.sql'),       # Depends on PATIENTS and STAFF
+    os.path.join(root_dir, 'Programming', 'APPOINTMENTS.sql'), # Depends on PATIENTS, STAFF, and ROOMS
+
+    # Level 3: Final dependencies
+    os.path.join(root_dir, 'Programming', 'PRESCRIPTIONS.sql'), # Depends on VISITS and MEDICATIONS
+    os.path.join(root_dir, 'DataImportFiles', 'INPATIENT_ADMISSIONS.sql') # Depends on PATIENTS and BEDS
 ]
 
 # The output file will be created in the root of Stage_A
