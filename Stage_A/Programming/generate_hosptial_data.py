@@ -100,13 +100,5 @@ for i in range(1, 501):
     prescriptions_data.append((i, dosage, random.randint(1, 20000), random.randint(1, 500)))
 write_sql_file('PRESCRIPTIONS.sql', 'PRESCRIPTIONS', ['Prescription_ID', 'Dosage', 'Visit_ID', 'Medication_ID'], prescriptions_data)
 
-# --- 7. INPATIENT_ADMISSIONS: 500 hospital stays with valid date logic ---
-admissions_data = []
-for i in range(1, 501):
-    adm_date = random_date(START_DT, END_DT)
-    dis_date = adm_date + timedelta(days=random.randint(1, 20)) # Discharge is always after Admission
-    admissions_data.append((i, f"'{adm_date}'", f"'{dis_date}'", random.randint(1, 500), random.randint(1, 500)))
-write_sql_file('INPATIENT_ADMISSIONS.sql', 'INPATIENT_ADMISSIONS', ['Admission_ID', 'Admission_Date', 'Discharge_Date', 'Patient_ID', 'Bed_ID'], admissions_data)
-
-print(f"Success! Generated 7 SQL files in the '{script_dir}' directory.")
-print("Files: ROOMS.sql, BEDS.sql, VISITS.sql, INVOICES.sql, APPOINTMENTS.sql, PRESCRIPTIONS.sql, INPATIENT_ADMISSIONS.sql")
+print(f"Success! Generated 6 SQL files in the '{script_dir}' directory.")
+print("Files: ROOMS.sql, BEDS.sql, VISITS.sql, INVOICES.sql, APPOINTMENTS.sql, PRESCRIPTIONS.sql")
