@@ -97,26 +97,52 @@
 ## 4. שאילתות עדכון ומחיקה 
 שאילתות לוגיות של התנהלות בית הספר ופעולות יומיות.
 
-* ** עדכוני UPDATE מחלקתיים (מצב לפני ואחרי העדכון):**
-  1. עדכן את סוג החדר לטיפול נמרץ לכלל חדרי מחלקת החירום (Update 1).
-  2. הגדלת התשלומים הפתוחים (10% + ) ללקוחות ללא מספר טלפון תקין במערכת (Update 2).
-  3. הוספת טייטל "ארכיון" לכתובות דואר של מטופלים שאינם פעילים במדדים מאז שנת 2020 (Update 3).
+###  עדכוני UPDATE מחלקתיים:
 
-<br><ins>דוגמא: שדרוג החדר מחלקת חירום (עדכון 1 - לפרטים שאר העדכונים בקובץ ה-Queries)</ins>:
-<br><b>לפני העדכון:</b>
+**עדכון 1 - חדרי מחלקת החירום הופכים לטיפול נמרץ:**
+* שאילתה שמאתרת קוד מחלקה של "Emergency" ומשדרגת את חדריה ל- Intensive_Care_Unit.
+<br><b>מסד נתונים לפי העדכון (Before):</b>
 <br><img src="../Images/Stage_B_Screenshots/Update_1_before.png" width="600">
-<br><b>לאחר העדכון (סוג החדר הפך ל Intensive_Care_Unit):</b>
+<br><b>מסד נתונים לאחר העדכון (After):</b>
 <br><img src="../Images/Stage_B_Screenshots/Update_1_after.png" width="600">
 
-* ** מחיקות DELETE ארגוניות (מצב לפני ואחרי העדכון):**
-  1. מחיקת תורים הקשורים לרופאים ממחלקות שנסגרו לציבור. (Delete 1)
-  2. פינוי רשומות המיטות השייכות טכנית לחדרים הנמצאים בתהליך שיפוץ (Delete 2).
-  3. זריקת מרשמים פקטיביים של תרופות אשר בתיאורן מופיעה המילה פג-תוקף (Delete 3).
+**עדכון 2 - קנס בעיות זיהוי בחשבון:**
+* הגדלת החוב ב-10% עבור חשבוניות שמקושרות למטופל בעל טלפון חסר/בלתי-תקין.
+<br><b>מסד נתונים לפי העדכון (Before):</b>
+<br><img src="../Images/Stage_B_Screenshots/Update_2_before.png" width="600">
+<br><b>מסד נתונים לאחר העדכון (After):</b>
+<br><img src="../Images/Stage_B_Screenshots/Update_2_after.png" width="600">
 
-<br><ins>דוגמא: מחיקת מרשמי תרופות שפגו מתוקף (מחיקה 3)</ins>:
-<br><b>לפני המחיקה (נמצאו מרשמים לתרופה):</b>
+**עדכון 3 - ארכוב כתובות ישנות:**
+* עדכון כתובת לארכיון לכל המטופלים שאין להם ביקורים רשומים משנת 2020.
+<br><b>מסד נתונים לפי העדכון (Before):</b>
+<br><img src="../Images/Stage_B_Screenshots/Update_3_before.png" width="600">
+<br><b>מסד נתונים לאחר העדכון (After):</b>
+<br><img src="../Images/Stage_B_Screenshots/Update_3_after.png" width="600">
+
+---
+
+###  מחיקות DELETE ארגוניות:
+
+**מחיקה 1 - ביטול תורים (Appointments) למחלקה מבוטלת:**
+* מחיקת התורים העתידיים ששייכים לאנשי צוות תחת מחלקה שנסגרה.
+<br><b>מסד נתונים לפני המחיקה (Before):</b>
+<br><img src="../Images/Stage_B_Screenshots/Delete_1_before.png" width="600">
+<br><b>מסד נתונים לאחר המחיקה (After):</b>
+<br><img src="../Images/Stage_B_Screenshots/Delete_1_after.png" width="600">
+
+**מחיקה 2 - גריטת מיטות במחסנים:**
+* מנתקים ומוחקים כליל רשומות של מיטות ממרפאות/חדרים שעוברים לידי מערך התחזוקה (Maintenance).
+<br><b>מסד נתונים לפני המחיקה (Before):</b>
+<br><img src="../Images/Stage_B_Screenshots/Delete_2_before.png" width="600">
+<br><b>מסד נתונים לאחר המחיקה (After):</b>
+<br><img src="../Images/Stage_B_Screenshots/Delete_2_after.png" width="600">
+
+**מחיקה 3 - ביטול מרשמים לתרופות פגות-תוקף:**
+* שחרור עומס מהמסד על ידי מחיקת המרשמים ההיסטוריים לתרופות אשר שמן תויג כ- Expired.
+<br><b>מסד נתונים לפני המחיקה (Before):</b>
 <br><img src="../Images/Stage_B_Screenshots/Delete_3_before.png" width="600">
-<br><b>לאחר המחיקה (נחסמו ונמחקו):</b>
+<br><b>מסד נתונים לאחר המחיקה (After):</b>
 <br><img src="../Images/Stage_B_Screenshots/Delete_3_after.png" width="600">
 
 
