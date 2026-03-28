@@ -24,6 +24,8 @@
 **הסבר על ההבדל בין הצורות ויעילות:**
 ביצוע השאילתא בעזרת EXISTS לרוב מהיר ויעיל יותר משימוש בצורת ה- IN. הסיבה לעדיפות היא שמנוע מסד הנתונים משתמש בלוגיקת "Short-Circuit" כשהוא משתמש ב-EXISTS. המשמעות היא שברגע שהוא סורק את טבלת ה-VISITS ומוצא את המטופל פעם אחת בלבד בשנת 2024, הוא מחזיר אמת ועוצר מיד! לעומת זאת, שימוש ב- IN יחייב את הפקודה הפנימית לרוץ על כל היסטוריית הביקורים, לאסוף רשימה מלאה בזיכרון, ורק אז לסנן מתוכה עם מנוע ה-IN.
 **קוד השאילתא בשיטה עם IN**
+
+ ```sql
 SELECT Patient_ID, First_Name, Last_Name, Phone_Number 
 FROM PATIENTS 
 WHERE Patient_ID IN (
@@ -31,7 +33,11 @@ WHERE Patient_ID IN (
     FROM VISITS 
     WHERE EXTRACT(YEAR FROM Visit_Date) = 2024
 );
+```
+
 **קוד השאילתא בשיטה עם EXISTS**
+
+ ```sql
 SELECT Patient_ID, First_Name, Last_Name, Phone_Number 
 FROM PATIENTS p
 WHERE EXISTS (
@@ -40,6 +46,7 @@ WHERE EXISTS (
     WHERE v.Patient_ID = p.Patient_ID 
       AND EXTRACT(YEAR FROM v.Visit_Date) = 2024
 );
+```
 
 *צילום הרצה ותוצאות:*
 <br><img src="../Images/Stage_B_Screenshots/Quary_1.png" width="700">
@@ -51,6 +58,8 @@ WHERE EXISTS (
 **הסבר על ההבדל בין הצורות ויעילות:**
 הדרך האידיאלית להשגת התוצאה היא שימוש ישיר ב- GROUP BY וחיתוך עם HAVING. בקוד המקביל בחרנו לכתוב קריאת "Inline View" (תת-שאילתא בתוך פקודת ה-FROM). קריאה זו מכריחה את השרת לייצר טבלה זמנית פיזית בזיכרון שעליה רק מתבצע החיתוך, תהליך שצורך יותר משאבים באופן משמעותי יחסית פשוט לפילטור ישיר של מנוע האופטימיזציה בעזרת ה-HAVING.
 **קוד השאילתא בשיטה עם GROUP BY ו HAVING**
+
+ ```sql
 SELECT s.Employee_ID, s.First_Name, s.Last_Name, COUNT(a.Appointment_ID) AS Total_Appointments
 FROM STAFF s
 JOIN APPOINTMENTS a ON s.Employee_ID = a.Employee_ID
@@ -58,7 +67,11 @@ WHERE EXTRACT(MONTH FROM a.Appointment_Date) = 5
 GROUP BY s.Employee_ID, s.First_Name, s.Last_Name
 HAVING COUNT(a.Appointment_ID) > 5
 ORDER BY Total_Appointments DESC;
+```
+
 **קוד השאילתא בשיטה עם Inline View**
+
+ ```sql
 SELECT Employee_ID, First_Name, Last_Name, Total_Appointments
 FROM (
     SELECT Employee_ID, COUNT(Appointment_ID) AS Total_Appointments
@@ -69,7 +82,7 @@ FROM (
 JOIN STAFF s USING (Employee_ID)
 WHERE app_counts.Total_Appointments > 5
 ORDER BY Total_Appointments DESC;
-
+```
 
 *צילום הרצה ותוצאות:*
 <br><img src="../Images/Stage_B_Screenshots/Quary_2.png" width="700">
@@ -80,6 +93,8 @@ ORDER BY Total_Appointments DESC;
 **הסבר על ההבדל בין הצורות ויעילות:**
 למציאת היעדר קשר (צדדים ריקים), LEFT JOIN עובד מצוין שכן הוא יודע לרתום אינדקסים קיימים למנוע הסריקה. זאת לעומת שימוש בפקודת NOT IN שנחשבת רגישה במיוחד לפערים בנתונים - מספיק שבשאילתה הפנימית הוחזרה תוצאה יחידה של NULL, כל ההשוואה של ה-NOT IN קורסת ומחזירה לנו ריק (בגלל לוגיקה משולשת של SQL), ומחייבת סריקת טבלה מלאה (Full Table Scan) שפוגעת אנושות בביצועים.
 **קוד השאילתא בשיטה עם NOT IN**
+
+ ```sql
 SELECT Room_ID, Room_Number, Room_Type
 FROM ROOMS
 WHERE Room_ID NOT IN (
@@ -87,11 +102,16 @@ WHERE Room_ID NOT IN (
     FROM BEDS 
     WHERE Room_ID IS NOT NULL
 );
+```
+
 **קוד השאילתא בשיטה עם LEFT JOIN ו IS NULL**
+
+ ```sql
 SELECT r.Room_ID, r.Room_Number, r.Room_Type
 FROM ROOMS r
 LEFT JOIN BEDS b ON r.Room_ID = b.Room_ID
 WHERE b.Bed_ID IS NULL;
+```
 
 *צילום הרצה ותוצאות:*
 <br><img src="../Images/Stage_B_Screenshots/Quary_3.png" width="700">
@@ -102,6 +122,8 @@ WHERE b.Bed_ID IS NULL;
 **הסבר על ההבדל בין הצורות ויעילות:**
 שימוש בשרשרת JOIN מסורתית הוכח כיעיל ביותר. ה-JOIN מבצע הצלבת נתונים בזיכרון בצורה חד-פעמית. למולו, הצורה השנייה נבנתה באמצעות הנחת השאילתא הפנימית בתוך עמודת ה- SELECT (שיטה הנקראת Correlated Subquery). שיטה זו מייצרת את בעיית ה- N+1 הידועה: לשם גישה לשם המחלקה, מנוע המסד מוכרח לרוץ ולהפעיל את תת-השאילתא *שוב ושוב פעם אחת לכל שורת פלט* שקיימת, דבר המעמיס על המסד בצורה בלתי פרופורציונלית.
 **קוד השאילתא בשיטה עם Correlated Subquery**
+
+ ```sql
 SELECT 
     (SELECT Department_Name FROM DEPARTMENTS d WHERE d.Department_ID = r.Department_ID) AS Dept_Name,
     COUNT(ia.Admission_ID) AS Total_Admissions
@@ -111,7 +133,11 @@ JOIN ROOMS r ON b.Room_ID = r.Room_ID
 WHERE EXTRACT(YEAR FROM ia.Admission_Date) = 2024
 GROUP BY r.Department_ID
 ORDER BY Total_Admissions DESC;
+```
+
 **קוד השאילתא בשיטה עם chained JOINs**
+
+ ```sql
 SELECT 
     d.Department_Name,
     COUNT(ia.Admission_ID) AS Total_Admissions
@@ -122,6 +148,7 @@ JOIN DEPARTMENTS d ON r.Department_ID = d.Department_ID
 WHERE EXTRACT(YEAR FROM ia.Admission_Date) = 2024
 GROUP BY d.Department_Name
 ORDER BY Total_Admissions DESC;
+```
 
 *צילום הרצה ותוצאות:*
 <br><img src="../Images/Stage_B_Screenshots/Quary_4.png" width="700">
@@ -134,6 +161,8 @@ ORDER BY Total_Admissions DESC;
 *  **שאילתא 5 (אזהרות חייבים על סכומים חריגים):**
   מזהה את מערך המטופלים שצברו בחשבוניות תשלום חובות או חיובים כללים מצטברים שערכם גבוה מ-1500 (שילוב כלי ה-SUM).
   **קוד השאילתא**
+
+   ```sql
   SELECT 
     p.First_Name, p.Last_Name, p.Phone_Number, 
     SUM(i.Total_Amount) as Total_Billed,
@@ -143,12 +172,15 @@ ORDER BY Total_Admissions DESC;
   GROUP BY p.Patient_ID, p.First_Name, p.Last_Name, p.Phone_Number
   HAVING SUM(i.Total_Amount) > 1500
   ORDER BY Total_Billed DESC;
+  ```
 
   <br><img src="../Images/Stage_B_Screenshots/Quary_5.png" width="700">
 
 *  **שאילתא 6 (תרופות שחולקו לרבעון 1):**
   הצגת כמות מרשמים שחולקה מכל תרופה במהלך הרבעון הראשון בלבד, חלוקה ופילוח לשמות החודשים הטקסטואליים באמצעות הפונקציה TO_CHAR.
   **קוד השאילתא**
+
+   ```sql
   SELECT 
     m.Medication_Name, 
     TO_CHAR(v.Visit_Date, 'Month') AS Visit_Month,
@@ -159,12 +191,15 @@ ORDER BY Total_Admissions DESC;
   WHERE EXTRACT(MONTH FROM v.Visit_Date) BETWEEN 1 AND 3
   GROUP BY m.Medication_Name, TO_CHAR(v.Visit_Date, 'Month')
   ORDER BY Prescriptions_Count DESC;
+  ```
 
   <br><img src="../Images/Stage_B_Screenshots/Quary_6.png" width="700">
 
 *  **שאילתא 7 (צוות שמטפל בקהילה ללא תשלום):**
   שליפת כלל אנשי הצוות הרפואי שטיפל במטופלים "מזדמנים" – מטופלים שאינם קיימים כלל במערכת החשבוניות, מה שמעיד על עבודת התנדבות או מקרי חירום מזדמנים.
   **קוד השאילתא**
+
+   ```sql
   SELECT s.First_Name, s.Last_Name, s.Role, COUNT(DISTINCT v.Patient_ID) as Unique_Patients_Handled
   FROM STAFF s
   JOIN VISITS v ON s.Employee_ID = v.Employee_ID
@@ -173,12 +208,15 @@ ORDER BY Total_Admissions DESC;
   )
   GROUP BY s.Employee_ID, s.First_Name, s.Last_Name, s.Role
   ORDER BY Unique_Patients_Handled DESC;
+  ```
 
   <br><img src="../Images/Stage_B_Screenshots/Quary_7.png" width="700">
 
 *  **שאילתא 8 (דוח אורך ימי אשפוז חודשי):**
   חישוב מתמטי ותאריכי בין יום שחרור לימי קבלה (Discharge_Date - Admission_Date), המפיק את ממוצע ימי האשפוז מנורמל ומחולק לפי קבוצות קלנדריות של חודש ושנה.
   **קוד השאילתא**
+  
+  ```sql
   SELECT 
     EXTRACT(YEAR FROM Admission_Date) AS Year,
     EXTRACT(MONTH FROM Admission_Date) AS Month,
@@ -187,6 +225,7 @@ ORDER BY Total_Admissions DESC;
   FROM INPATIENT_ADMISSIONS
   GROUP BY EXTRACT(YEAR FROM Admission_Date), EXTRACT(MONTH FROM Admission_Date)
   ORDER BY Year DESC, Month DESC;
+  ```
 
   <br><img src="../Images/Stage_B_Screenshots/Quary_8.png" width="700">
 
