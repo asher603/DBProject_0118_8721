@@ -202,8 +202,15 @@ WHERE Room_ID IN (
     WHERE d.Department_Name = 'Maintenance'
 );
 
--- Delete 3: Discard prescriptions associated with outdated/expired medications.
-DELETE FROM PRESCRIPTIONS
-WHERE Medication_ID IN (
-    SELECT Medication_ID FROM MEDICATIONS WHERE Medication_Name LIKE '%Expired%'
+-- Delete 3: Delete pre-2023 Cardiology visits.
+DELETE FROM VISITS
+WHERE Visit_Date < TO_DATE('2023-01-01', 'YYYY-MM-DD')
+AND Employee_ID IN (
+    SELECT Employee_ID 
+    FROM STAFF 
+    WHERE Department_ID = (
+        SELECT Department_ID 
+        FROM DEPARTMENTS 
+        WHERE Department_Name = 'Cardiology Unit'
+    )
 );
