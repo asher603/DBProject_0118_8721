@@ -35,25 +35,25 @@ The system interface was meticulously characterized using **Google AI Studio**. 
 ### System Interface Detailed Mockups:
 
 1. **Patient Registration:** Used for onboarding new patients and maintaining personal contact information.  
-   ![Patient Registration](images/UI_images/patience.png)
+   ![Patient Registration](./images/UI_images/patience.png)
 
 2. **Staff Directory:** A central hub for managing doctors, nurses, and administrative staff, including their specializations and status.  
-   ![Staff Directory](images/UI_images/staff_directory.png)
+   ![Staff Directory](./images/UI_images/staff_directory.png)
 
 3. **Appointment & Room Scheduling:** Manages the scheduling of patient consultations and assigns them to specific doctors and rooms.  
-   ![Appointments](images/UI_images/appointments.png)
+   ![Appointments](./images/UI_images/appointments.png)
 
 4. **Visit & Medical Records:** Facilitates the recording of visit IDs, diagnoses, and detailed clinical notes for each patient encounter.  
-   ![Medical Records](images/UI_images/medical_records.png)
+   ![Medical Records](./images/UI_images/medical_records.png)
 
 5. **Pharmacy & Prescriptions:** Handles the issuance of medical prescriptions, including medication names, dosages, and instructions.  
-   ![Pharmacy](images/UI_images/pharmacy.png)
+   ![Pharmacy](./images/UI_images/pharmacy.png)
 
 6. **Inpatient Ward Management:** Provides a real-time overview of ward capacity (ICU, Maternity, etc.) and current bed occupancy.  
-   ![Wards](images/UI_images/wards.png)
+   ![Wards](./images/UI_images/wards.png)
 
 7. **Billing & Invoices:** Manages the financial aspect, generating invoices based on patient services and tracking payment status.  
-   ![Billing](images/UI_images/billing.png)
+   ![Billing](./images/UI_images/billing.png)
 
 ---
 
@@ -71,10 +71,10 @@ The system consists of 11 primary entities:
 
 ### Diagrams:
 #### ERD Diagram (Conceptual)
-![ERD Diagram](images/diagrams_images/erd.png)
+![ERD Diagram](./images/diagrams_images/erd.png)
 
 #### DSD Diagram (Physical Relational Schema)
-![DSD Diagram](images/diagrams_images/relational_schema.png)
+![DSD Diagram](./images/diagrams_images/relational_schema.png)
 
 ---
 
@@ -82,14 +82,17 @@ The system consists of 11 primary entities:
 We utilized three distinct methods to populate the database with over 40,000 combined records:
 
 1. **Mockaroo (folder: `mockarooFiles`):** Used to generate data for **Patients**, **Staff**, and **Medications**.
-   *Example of this method:* ![Mockaroo Setup](images/data_generation_methods/from_mockaroo/generating_patients_data_using_mockaroo.png)
+   *Example of this method:* 
+   ![Mockaroo Setup](./images/data_generation_methods/from_mockaroo/generating_patients_data_using_mockaroo.png)
 
 2. **Python Programming (folder: `Programming`):** A Python script was developed to generate data for **Rooms**, **Beds**, **Inpatient_Admissions**, **Visits**, **Invoices**, and **Prescriptions**.  
-   *Example of this method:* ![Python Script](images/data_generation_methods/from_pyhton_script/generating_rooms_data_using_script.png)
+   *Example of this method:* 
+   ![Python Script](./images/data_generation_methods/from_pyhton_script/generating_rooms_data_using_script.png)
 
 3. **Data Import via CSV (folder: `DATAIMPORTFILES`):** A Python script was developed to create data for **DEPARTMENTS** and **INPATIENT_ADMISSIONS** as a csv file which was then used to create the sql file containing the insert commands.
-   *Example of this method:* ![Generate CSV Files](images/data_generation_methods/from_csv/generate_csv_files.png)
-   ![Convert CSV to SQL](images/data_generation_methods/from_csv/convert_csv_to_sql.png)
+   *Example of this method:* 
+   ![Generate CSV Files](./images/data_generation_methods/from_csv/generate_csv_files.png)
+   ![Convert CSV to SQL](./images/data_generation_methods/from_csv/convert_csv_to_sql.png)
 
 **Data Volume Statistics:**
 * **Patients Table**: 20,000 records.
@@ -105,13 +108,16 @@ The database was fully backed up using the pgAdmin 4 Backup tool in **Custom** f
 
 ### Backup Execution:
 The backup file was saved as `backup_2026_03_18.backup`.
-* **pgAdmin Backup Settings:** ![Backup Settings](images/db_backup/backup/setting_the_options_for_the_backup.png)
-* **Backup Creation Confirmation:** ![Backup Confirmation](images/db_backup/backup/confirnation_of_backup_creation.png)
+* **pgAdmin Backup Settings:** 
+![Backup Settings](./images/db_backup/backup/setting_the_options_for_the_backup.png)
+* **Backup Creation Confirmation:** 
+![Backup Confirmation](./images/db_backup/backup/confirnation_of_backup_creation.png)
 
 ### Restore Verification:
 The restoration process was successfully performed on a separate machine within a clean test environment (`Hospital_Test`) to ensure system recoverability in case of failure.
-* **Restore Success Confirmation:** ![Restore Success](images/db_backup/restore/restore_success.jpeg)
-* **Post-Restore Data Validation:** A `SELECT` query was executed on the Patients table to verify the integrity of the restored data.  
-  ![Restore Verification](images/db_backup/restore/restore_verification.jpeg)
+* **Restore Success Confirmation:** 
+![Restore Success](./images/db_backup/restore/restore_success.jpeg)
+* **Post-Restore Data Validation:** A `SELECT` query was executed on the Patients table to verify the integrity of the restored data.
+  ![Restore Verification](./images/db_backup/restore/restore_verification.jpeg)
 
 ---

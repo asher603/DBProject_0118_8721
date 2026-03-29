@@ -48,9 +48,9 @@ WHERE EXISTS (
       AND EXTRACT(YEAR FROM v.Visit_Date) = 2024
 );
 ```
-
+Stage_B\images
 *צילום הרצה ותוצאות:*
-<br><img src="../Images/Stage_B_Screenshots/Quary_1.png" width="700">
+<br><img src="./images/Quary_1.png" width="700">
 
 
 
@@ -87,7 +87,7 @@ ORDER BY Total_Appointments DESC;
 ```
 
 *צילום הרצה ותוצאות:*
-<br><img src="../Images/Stage_B_Screenshots/Quary_2.png" width="700">
+<br><img src="./images/Quary_2.png" width="700">
 
 
 ###  שאילתא 3: מציאת חדרים ריקים ללא מיטות
@@ -117,7 +117,7 @@ WHERE b.Bed_ID IS NULL;
 ```
 
 *צילום הרצה ותוצאות:*
-<br><img src="../Images/Stage_B_Screenshots/Quary_3.png" width="700">
+<br><img src="./images/Quary_3.png" width="700">
 
 
 ###  שאילתא 4: כמות האשפוזים לפי מחלקה בשנת 2024
@@ -155,7 +155,7 @@ ORDER BY Total_Admissions DESC;
 ```
 
 *צילום הרצה ותוצאות:*
-<br><img src="../Images/Stage_B_Screenshots/Quary_4.png" width="700">
+<br><img src="./images/Quary_4.png" width="700">
 
 
 ---
@@ -179,7 +179,7 @@ ORDER BY Total_Admissions DESC;
   ORDER BY Total_Billed DESC;
   ```
 
-  <br><img src="../Images/Stage_B_Screenshots/Quary_5.png" width="700">
+  <br><img src="./images/Quary_5.png" width="700">
 
 *  **שאילתא 6 (תרופות שחולקו לרבעון 1):**
   הצגת כמות מרשמים שחולקה מכל תרופה במהלך הרבעון הראשון בלבד, חלוקה ופילוח לשמות החודשים הטקסטואליים באמצעות הפונקציה TO_CHAR.
@@ -199,7 +199,7 @@ ORDER BY Total_Admissions DESC;
   ORDER BY Prescriptions_Count DESC;
   ```
 
-  <br><img src="../Images/Stage_B_Screenshots/Quary_6.png" width="700">
+  <br><img src="./images/Quary_6.png" width="700">
 
 *  **שאילתא 7 (צוות שמטפל בקהילה ללא תשלום):**
   שליפת כלל אנשי הצוות הרפואי שטיפל במטופלים "מזדמנים" – מטופלים שאינם קיימים כלל במערכת החשבוניות, מה שמעיד על עבודת התנדבות או מקרי חירום מזדמנים.
@@ -217,7 +217,7 @@ ORDER BY Total_Admissions DESC;
   ORDER BY Unique_Patients_Handled DESC;
   ```
 
-  <br><img src="../Images/Stage_B_Screenshots/Quary_7.png" width="700">
+  <br><img src="./images/Quary_7.png" width="700">
 
 *  **שאילתא 8 (דוח אורך ימי אשפוז חודשי):**
   חישוב מתמטי ותאריכי בין יום שחרור לימי קבלה (Discharge_Date - Admission_Date), המפיק את ממוצע ימי האשפוז מנורמל ומחולק לפי קבוצות קלנדריות של חודש ושנה.
@@ -235,7 +235,7 @@ ORDER BY Total_Admissions DESC;
   ORDER BY Year DESC, Month DESC;
   ```
 
-  <br><img src="../Images/Stage_B_Screenshots/Quary_8.png" width="700">
+  <br><img src="./images/Quary_8.png" width="700">
 
 ---
 
@@ -244,15 +244,15 @@ ORDER BY Total_Admissions DESC;
 
 ### 1.  אילוץ תקינות טלפון ייחודי (UNIQUE)
 מניעת מצב עתידי בו מטופל שמר טלפון שכבר שייך במערכת (טעות הקלדה או זהות בדויה). אל האילוץ unique_phone נשלח ניסיון הכנסת לקוח עם טלפון שקיים, וההפרה יצרה את שגיאת ה-Key הכפול כמוצג.
-<br><img src="../Images/Stage_B_Screenshots/Constraint_1_Error.png" width="600">
+<br><img src="./images/Constraint_1_Error.png" width="600">
 
 ### 2.  אילוץ מינימום אורכים לטלפון (CHECK)
 הוספת חוק בסיס עם בדיקת LENGTH(). המספר חייב להכיל לפחות 9 תווים. ניסיון החדרה של המספר "123" עורר את שגיאת ה-Check Constraint כפי שניתן לראות.
-<br><img src="../Images/Stage_B_Screenshots/Constraint_2_Error.png" width="600">
+<br><img src="./images/Constraint_2_Error.png" width="600">
 
 ### 3.  אילוץ תאריכי הגיוני למרפאה (CHECK)
 הוספת חוק מניעת הרשמת פגישות ששנתן ישנה יותר משנת 2000. ניסיון החדרה מכוון של מערך משנת 1995 נבלם אוטומטית.
-<br><img src="../Images/Stage_B_Screenshots/Constraint_3_Error.png" width="600">
+<br><img src="./images/Constraint_3_Error.png" width="600">
 
 ---
 
@@ -264,23 +264,23 @@ ORDER BY Total_Admissions DESC;
 **עדכון 1 - חדרי מחלקת החירום הופכים לטיפול נמרץ:**
 * שאילתה שמאתרת קוד מחלקה של "Emergency" ומשדרגת את חדריה ל- Intensive_Care_Unit.
 <br><b>מסד נתונים לפי העדכון (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_1_before.png" width="600">
+<br><img src="./images/Update_1_before.png" width="600">
 <br><b>מסד נתונים לאחר העדכון (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_1_after.png" width="600">
+<br><img src="./images/Update_1_after.png" width="600">
 
 **עדכון 2 - קנס בעיות זיהוי בחשבון:**
 * הגדלת החוב ב-10% עבור חשבוניות שמקושרות למטופל בעל טלפון חסר/בלתי-תקין.
 <br><b>מסד נתונים לפי העדכון (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_2_before.png" width="600">
+<br><img src="./images/Update_2_before.png" width="600">
 <br><b>מסד נתונים לאחר העדכון (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_2_after.png" width="600">
+<br><img src="./images/Update_2_after.png" width="600">
 
 **עדכון 3 - ארכוב כתובות ישנות:**
 * עדכון כתובת לארכיון לכל המטופלים שאין להם ביקורים רשומים משנת 2020.
 <br><b>מסד נתונים לפי העדכון (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_3_before.png" width="600">
+<br><img src="./images/Update_3_before.png" width="600">
 <br><b>מסד נתונים לאחר העדכון (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Update_3_after.png" width="600">
+<br><img src="./images/Update_3_after.png" width="600">
 
 ---
 
@@ -289,23 +289,23 @@ ORDER BY Total_Admissions DESC;
 **מחיקה 1 - ביטול תורים (Appointments) למחלקה מבוטלת:**
 * מחיקת התורים העתידיים ששייכים לאנשי צוות תחת מחלקה שנסגרה.
 <br><b>מסד נתונים לפני המחיקה (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_1_before.png" width="600">
+<br><img src="./images/Delete_1_before.png" width="600">
 <br><b>מסד נתונים לאחר המחיקה (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_1_after.png" width="600">
+<br><img src="./images/Delete_1_after.png" width="600">
 
 **מחיקה 2 - גריטת מיטות במחסנים:**
 * מנתקים ומוחקים כליל רשומות של מיטות ממרפאות/חדרים שעוברים לידי מערך התחזוקה (Maintenance).
 <br><b>מסד נתונים לפני המחיקה (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_2_before.png" width="600">
+<br><img src="./images/Delete_2_before.png" width="600">
 <br><b>מסד נתונים לאחר המחיקה (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_2_after.png" width="600">
+<br><img src="./images/Delete_2_after.png" width="600">
 
 **מחיקה 3 - ניקוי היסטוריית ביקורים במחלקת קרדיולוגיה:**
 * שאילתה לא-טריוויאלית המוחקת ביקורים ישנים (לפני 2023) שבוצעו על ידי אנשי צוות השייכים ליחידת הקרדיולוגיה ('Cardiology Unit'). השאילתה מקשרת בין טבלת הביקורים, הצוות והמחלקות.
 <br><b>מסד נתונים לפני המחיקה (Before):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_3_before.png" width="600">
+<br><img src="./images/Delete_3_before.png" width="600">
 <br><b>מסד נתונים לאחר המחיקה (After):</b>
-<br><img src="../Images/Stage_B_Screenshots/Delete_3_after.png" width="600">
+<br><img src="./images/Delete_3_after.png" width="600">
 
 
 ---
@@ -316,11 +316,11 @@ ORDER BY Total_Admissions DESC;
 הפעלנו בלוק עבודה בעזרת הטרנזקציה BEGIN. ביצענו פקודת UPDATE שהפכה חדר תפעולי למצב "VIP_Temporary". במרכז הטרנזקציה שלפנו את המידע לזיכרון וראינו שהשינויים בוצעו במלואם. בשלב השלישי הוטמעה בבקיאות הפקודה הפוסלת ROLLBACK שהדגימה שחזרנו בצורה מסוללת למצב המדויק מן ההתחלה, והמידע לא נשמר לדיסק.
 
 <br><b>שלב א' - מצב בסיס הנתונים בתחילת הדרך:</b>
-<br><img src="../Images/Stage_B_Screenshots/rollback_start.png" width="600">
+<br><img src="./images/rollback_start.png" width="600">
 <br><b>שלב ב' - מצב בסיס הנתונים תוך כדי הטרנזקציה (חדר מס' 1 התעדכן):</b>
-<br><img src="../Images/Stage_B_Screenshots/rollback_mid.png" width="600">
+<br><img src="./images/rollback_mid.png" width="600">
 <br><b>שלב ג' - מצב בסיס הנתונים אחרי פקודת ביטול ROLLBACK:</b>
-<br><img src="../Images/Stage_B_Screenshots/rollback_end.png" width="600">
+<br><img src="./images/rollback_end.png" width="600">
 
 ---
 
@@ -328,10 +328,10 @@ ORDER BY Total_Admissions DESC;
 בדוגמא כזו יצרנו עדכון סיומת לשם התרופה (הוספת סטרינג "Updated"), והפעם קיבענו למסד הנתונים כדי להוריד לדיסק לצמיתות בעזרת COMMIT. לאחר השמירה הוכחה השמירה הוודאית.
 
 <br><b>שלב א' - מצב ההתחלתי של שם התרופה:</b>
-<br><img src="../Images/Stage_B_Screenshots/commit_start.png" width="600">
+<br><img src="./images/commit_start.png" width="600">
 <br><b>שלב ב' - מצב הנתונים בתוך הבלוק העצמאי (שם התרופה השתנה):</b>
-<br><img src="../Images/Stage_B_Screenshots/commit_mid.png" width="600">
+<br><img src="./images/commit_mid.png" width="600">
 <br><b>שלב ג' - מצב הנתונים הסופי והמתועד, לאחר חתימת השמירה:</b>
-<br><img src="../Images/Stage_B_Screenshots/commit_end.png" width="600">
+<br><img src="./images/commit_end.png" width="600">
 
 </div>
