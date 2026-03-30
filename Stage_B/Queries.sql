@@ -202,15 +202,11 @@ WHERE Room_ID IN (
     WHERE d.Department_Name = 'Maintenance'
 );
 
--- Delete 3: Delete pre-2023 Cardiology visits.
-DELETE FROM VISITS
-WHERE Visit_Date < TO_DATE('2023-01-01', 'YYYY-MM-DD')
-AND Employee_ID IN (
-    SELECT Employee_ID 
-    FROM STAFF 
-    WHERE Department_ID = (
-        SELECT Department_ID 
-        FROM DEPARTMENTS 
-        WHERE Department_Name = 'Cardiology Unit'
-    )
+-- Delete 3: Delete pre 2023 invoices for young patients (born 2008+)
+DELETE FROM INVOICES
+WHERE Billing_Date < TO_DATE('2023-01-01', 'YYYY-MM-DD')
+AND Patient_ID IN (
+    SELECT Patient_ID 
+    FROM PATIENTS 
+    WHERE EXTRACT(YEAR FROM Date_Of_Birth) >= 2008
 );
