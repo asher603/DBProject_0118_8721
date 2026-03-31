@@ -14,6 +14,12 @@ Our main integration script (`Integrate.sql`) pulls together a unified medical t
 2. **Local Inpatient Admissions:** Hospitalization records from our system, also enriched with the remote partner's blood type data.
 3. **Remote Treatments:** Data pulled entirely from the partner's schema (`remote_partner`), including remote doctors, treatments, and given medications.
 
+
+### Data Consistency Update
+During the integration testing, we noticed a logical gap in our local data: not all inpatient admissions had a corresponding medical visit recorded during their timeframe. To maintain medical logic (ensuring every admitted patient was actively seen by a doctor), we executed a synchronization update. This query matched and updated exactly 409 existing clinic visits, aligning their `Patient_ID` and `Visit_Date` with our 409 inpatient admissions without altering the existing database schema.
+
+![Database Update for Logical Admissions](./images/update_db_for_logical_inpatient_admissions.png)
+
 ---
 
 ## Database Views & Queries (`Views.sql`)
