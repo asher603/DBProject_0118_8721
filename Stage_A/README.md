@@ -77,6 +77,7 @@ The system consists of 11 primary entities:
 #### DSD Diagram (Physical Relational Schema)
 ![DSD Diagram](./images/diagrams_images/relational_schema.png)
 
+---
 
 ### Data Dictionary
 This section outlines the purpose, fields, and structural relationships of every table within the database.
@@ -100,7 +101,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Role` | Attribute | Job title or medical role. |
 | `Department_ID` | **FK** | Links the employee to a specific department. |
 
-**Relationships:** Belongs to `DEPARTMENTS`. One-to-Many with `APPOINTMENTS` and `VISITS`.
+**Relationships:** Many-to-One with `DEPARTMENTS`. One-to-Many with `APPOINTMENTS` and `VISITS`.
 
 #### 3. ROOMS
 **Purpose:** Details the physical rooms available within the hospital's departments.
@@ -111,7 +112,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Room_Type` | Attribute | Classification of the room (e.g., Surgery, Ward). |
 | `Department_ID` | **FK** | Links the room to its designated department. |
 
-**Relationships:** Belongs to `DEPARTMENTS`. One-to-Many with `BEDS` and `APPOINTMENTS`.
+**Relationships:** Many-to-One with `DEPARTMENTS`. One-to-Many with `BEDS` and `APPOINTMENTS`.
 
 #### 4. BEDS
 **Purpose:** Tracks individual beds located within specific hospital rooms.
@@ -121,7 +122,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Bed_Number` | Attribute | Specific number or identifier of the bed. |
 | `Room_ID` | **FK** | Links the bed to the room it is located in. |
 
-**Relationships:** Belongs to `ROOMS`. One-to-Many with `INPATIENT_ADMISSIONS`.
+**Relationships:** Many-to-One with `ROOMS`. One-to-Many with `INPATIENT_ADMISSIONS`.
 
 #### 5. PATIENTS
 **Purpose:** Core table storing demographics and contact information for all registered patients.
@@ -146,7 +147,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Employee_ID` | **FK** | Links to the assigned medical staff member. |
 | `Room_ID` | **FK** | Links to the room where the appointment will take place. |
 
-**Relationships:** Belongs to `PATIENTS`, `STAFF`, and `ROOMS`.
+**Relationships:** Many-to-One with `PATIENTS`, `STAFF`, and `ROOMS`.
 
 #### 7. VISITS
 **Purpose:** Logs actual medical encounters, linking patients to the attending staff and recording the diagnosis.
@@ -158,7 +159,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Patient_ID` | **FK** | Links to the visited patient. |
 | `Employee_ID` | **FK** | Links to the attending staff member. |
 
-**Relationships:** Belongs to `PATIENTS` and `STAFF`. One-to-Many with `PRESCRIPTIONS`.
+**Relationships:** Many-to-One with `PATIENTS` and `STAFF`. One-to-Many with `PRESCRIPTIONS`.
 
 #### 8. INPATIENT_ADMISSIONS
 **Purpose:** Tracks hospital stays, logging when a patient is admitted to and discharged from a specific bed.
@@ -170,7 +171,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Patient_ID` | **FK** | Links to the admitted patient. |
 | `Bed_ID` | **FK** | Links to the specific bed assigned. |
 
-**Relationships:** Belongs to `PATIENTS` and `BEDS`.
+**Relationships:** Many-to-One with `PATIENTS` and `BEDS`.
 
 #### 9. INVOICES
 **Purpose:** Handles billing details and tracks financial charges for patient services.
@@ -181,7 +182,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Billing_Date` | Attribute | Date the invoice was generated. |
 | `Patient_ID` | **FK** | Links to the billed patient. |
 
-**Relationships:** Belongs to `PATIENTS`.
+**Relationships:** Many-to-One with `PATIENTS`.
 
 #### 10. MEDICATIONS
 **Purpose:** A catalog dictionary of all available medicines and drugs in the pharmacy.
@@ -201,7 +202,7 @@ This section outlines the purpose, fields, and structural relationships of every
 | `Visit_ID` | **FK** | Links the prescription to the specific medical visit. |
 | `Medication_ID` | **FK** | Links to the specific medication prescribed. |
 
-**Relationships:** Belongs to `VISITS` and `MEDICATIONS`.
+**Relationships:** Many-to-One with `VISITS` and `MEDICATIONS`.
 
 ---
 
