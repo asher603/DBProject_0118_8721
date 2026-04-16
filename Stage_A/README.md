@@ -10,6 +10,7 @@
 1. [Introduction](#introduction)
 2. [UI Characterization](#ui-characterization)
 3. [Database Design (ERD & DSD)](#database-design)
+4. [Data Dictionary](#data-dictionary)
 4. [Data Population Methods](#data-population-methods)
 5. [Backup and Recovery](#backup-and-recovery)
 
@@ -75,6 +76,132 @@ The system consists of 11 primary entities:
 
 #### DSD Diagram (Physical Relational Schema)
 ![DSD Diagram](./images/diagrams_images/relational_schema.png)
+
+
+### Data Dictionary
+This section outlines the purpose, fields, and structural relationships of every table within the database.
+
+#### 1. DEPARTMENTS
+**Purpose:** Stores information about the different hospital departments.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Department_ID` | **PK** | Unique identifier for the department. |
+| `Department_Name` | Attribute | Name of the hospital department. |
+
+**Relationships:** One-to-Many with `STAFF` and `ROOMS`.
+
+#### 2. STAFF
+**Purpose:** Manages hospital employees, including doctors, nurses, and administrative staff.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Employee_ID` | **PK** | Unique identifier for the employee. |
+| `First_Name` | Attribute | Employee's first name. |
+| `Last_Name` | Attribute | Employee's last name. |
+| `Role` | Attribute | Job title or medical role. |
+| `Department_ID` | **FK** | Links the employee to a specific department. |
+
+**Relationships:** Belongs to `DEPARTMENTS`. One-to-Many with `APPOINTMENTS` and `VISITS`.
+
+#### 3. ROOMS
+**Purpose:** Details the physical rooms available within the hospital's departments.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Room_ID` | **PK** | Unique identifier for the room. |
+| `Room_Number` | Attribute | Physical room number. |
+| `Room_Type` | Attribute | Classification of the room (e.g., Surgery, Ward). |
+| `Department_ID` | **FK** | Links the room to its designated department. |
+
+**Relationships:** Belongs to `DEPARTMENTS`. One-to-Many with `BEDS` and `APPOINTMENTS`.
+
+#### 4. BEDS
+**Purpose:** Tracks individual beds located within specific hospital rooms.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Bed_ID` | **PK** | Unique identifier for the bed. |
+| `Bed_Number` | Attribute | Specific number or identifier of the bed. |
+| `Room_ID` | **FK** | Links the bed to the room it is located in. |
+
+**Relationships:** Belongs to `ROOMS`. One-to-Many with `INPATIENT_ADMISSIONS`.
+
+#### 5. PATIENTS
+**Purpose:** Core table storing demographics and contact information for all registered patients.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Patient_ID` | **PK** | Unique identifier for the patient. |
+| `First_Name` | Attribute | Patient's first name. |
+| `Last_Name` | Attribute | Patient's last name. |
+| `Date_Of_Birth` | Attribute | Patient's birth date. |
+| `Phone_Number` | Attribute | Contact phone number. |
+| `Address` | Attribute | Residential address. |
+
+**Relationships:** One-to-Many with `APPOINTMENTS`, `VISITS`, `INPATIENT_ADMISSIONS`, and `INVOICES`.
+
+#### 6. APPOINTMENTS
+**Purpose:** Manages scheduled future consultations between patients and staff.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Appointment_ID` | **PK** | Unique identifier for the scheduled appointment. |
+| `Appointment_Date` | Attribute | Date and time of the appointment. |
+| `Patient_ID` | **FK** | Links to the patient who booked the appointment. |
+| `Employee_ID` | **FK** | Links to the assigned medical staff member. |
+| `Room_ID` | **FK** | Links to the room where the appointment will take place. |
+
+**Relationships:** Belongs to `PATIENTS`, `STAFF`, and `ROOMS`.
+
+#### 7. VISITS
+**Purpose:** Logs actual medical encounters, linking patients to the attending staff and recording the diagnosis.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Visit_ID` | **PK** | Unique identifier for the visit event. |
+| `Visit_Date` | Attribute | Date the visit occurred. |
+| `Diagnosis` | Attribute | Medical conclusion or findings. |
+| `Patient_ID` | **FK** | Links to the visited patient. |
+| `Employee_ID` | **FK** | Links to the attending staff member. |
+
+**Relationships:** Belongs to `PATIENTS` and `STAFF`. One-to-Many with `PRESCRIPTIONS`.
+
+#### 8. INPATIENT_ADMISSIONS
+**Purpose:** Tracks hospital stays, logging when a patient is admitted to and discharged from a specific bed.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Admission_ID` | **PK** | Unique identifier for the admission record. |
+| `Admission_Date` | Attribute | Date the patient was admitted. |
+| `Discharge_Date` | Attribute | Date the patient was discharged. |
+| `Patient_ID` | **FK** | Links to the admitted patient. |
+| `Bed_ID` | **FK** | Links to the specific bed assigned. |
+
+**Relationships:** Belongs to `PATIENTS` and `BEDS`.
+
+#### 9. INVOICES
+**Purpose:** Handles billing details and tracks financial charges for patient services.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Invoice_ID` | **PK** | Unique identifier for the invoice. |
+| `Total_Amount` | Attribute | Total cost billed to the patient. |
+| `Billing_Date` | Attribute | Date the invoice was generated. |
+| `Patient_ID` | **FK** | Links to the billed patient. |
+
+**Relationships:** Belongs to `PATIENTS`.
+
+#### 10. MEDICATIONS
+**Purpose:** A catalog dictionary of all available medicines and drugs in the pharmacy.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Medication_ID` | **PK** | Unique identifier for the medicine. |
+| `Medication_Name` | Attribute | The generic or brand name of the drug. |
+
+**Relationships:** One-to-Many with `PRESCRIPTIONS`.
+
+#### 11. PRESCRIPTIONS
+**Purpose:** Connects a specific patient visit to prescribed medications and their dosages.
+| Field Name | Role | Description |
+| :--- | :--- | :--- |
+| `Prescription_ID` | **PK** | Unique identifier for the prescription record. |
+| `Dosage` | Attribute | Prescribed amount and instructions. |
+| `Visit_ID` | **FK** | Links the prescription to the specific medical visit. |
+| `Medication_ID` | **FK** | Links to the specific medication prescribed. |
+
+**Relationships:** Belongs to `VISITS` and `MEDICATIONS`.
 
 ---
 
