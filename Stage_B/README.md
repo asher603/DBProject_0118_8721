@@ -13,6 +13,7 @@
 3. [אילוצים מוגדרים (Constraints)](#3-אילוצים-מוגדרים-)
 4. [שאילתות עדכון ומחיקה (UPDATE ו- DELETE)](#4-שאילתות-עדכון-ומחיקה-)
 5. [עסקאות בסיס נתונים (COMMIT ו- ROLLBACK)](#5-עסקאות-בסיס-נתונים-)
+6. [אינדקסים ובדיקות ביצועים (Indexes)](#6-אינדקסים-ובדיקות-ביצועים-)
 
 ---
 
@@ -346,5 +347,83 @@ ORDER BY Total_Admissions DESC;
 <br><img src="./images/commit_mid.png" width="600">
 <br><b>שלב ג' - מצב הנתונים הסופי והמתועד, לאחר חתימת השמירה:</b>
 <br><img src="./images/commit_end.png" width="600">
+
+---
+
+## 6. אינדקסים ובדיקות ביצועים 
+בחלק זה יצרנו 3 אינדקסים ייעודיים לשיפור ביצועי המערכת. עבור כל אינדקס הרצנו שורת EXPLAIN ANALYZE כדי למדוד את זמן הריצה (Execution Time) נטו של מנוע מסד הנתונים, לפני ואחרי ההוספה.
+
+###  אינדקס 1: מפתח זר בטבלת BEDS (עמודת Room_ID)
+**מטרה ותועלת:** מפתחות זרים אינם מאונדקסים אוטומטית. יצירת אינדקס זה משפרת בצורה ניכרת את הביצועים של פעולות חיבור (JOIN) בין טבלת החדרים לטבלת המיטות.
+
+**השאילתה שנבדקה:**
+```
+EXPLAIN ANALYZE
+SELECT r.Room_ID, r.Room_Number, r.Room_Type
+FROM ROOMS r
+LEFT JOIN BEDS b ON r.Room_ID = b.Room_ID
+WHERE b.Bed_ID IS NULL;
+```
+
+**ניתוח ושיפור זמנים:** זמן הריצה ירד מ-7.951ms ל-5.374ms. השיפור נובע מכך שפעולת ה-JOIN לא צריכה לסרוק את כל טבלת המיטות, אלא משתמשת באינדקס כדי למצוא התאמות (או במקרה זה, חוסר התאמות) לחדרים.
+
+<br><b>זמן ריצה לפני יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_without_idx_beds_room_id.png" width="400">
+<br><b>הודעת מערכת על יצירת האינדקס:</b>
+<br><img src="./images/creating_idx_beds_room_id.png" width="800">
+<br><b>זמן ריצה לאחר יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_with_idx_beds_room_id.png" width="400">
+
+
+###  אינדקס 2: מפתח זר בטבלת INVOICES (עמודת Patient_ID)
+**מטרה ותועלת:** ייעול דרמטי של שליפות המפלטרות חשבוניות לפי מטופל. קריטי למערכת שצריכה לחפש היסטוריית חיובים של לקוח ספציפי או לבצע תתי-שאילתות מהירות.
+
+**השאילתה שנבדקה:**
+```
+EXPLAIN ANALYZE
+SELECT s.First_Name, s.Last_Name, s.Role, COUNT(DISTINCT v.Patient_ID) as Unique_Patients
+FROM STAFF s
+JOIN VISITS v ON s.Employee_ID = v.Employee_ID
+WHERE v.Patient_ID NOT IN (
+    SELECT Patient_ID FROM INVOICES
+)
+GROUP BY s.Employee_ID, s.First_Name, s.Last_Name, s.Role;
+```
+
+**ניתוח ושיפור זמנים:** בשאילתה זו נרשם השיפור המשמעותי ביותר – זמן הריצה צנח מ-40.893ms ל-9.006ms. האינדקס חסך למנוע סריקה מלאה (Full Table Scan) של כלל החשבוניות בכל פעם שפקודת ה-NOT IN התבצעה.
+
+<br><b>זמן ריצה לפני יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_without_idx_invoices_patient_id.png" width="400">
+<br><b>הודעת מערכת על יצירת האינדקס:</b>
+<br><img src="./images/creating_idx_invoices_patient_id.png" width="800">
+<br><b>זמן ריצה לאחר יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_with_idx_invoices_patient_id.png" width="400">
+
+
+###  אינדקס 3: חיפוש תאריכים בטבלת VISITS (עמודת Visit_Date)
+**מטרה ותועלת:** מערכות בתי חולים מסננות מידע תדיר לפי טווחי תאריכים. האינדקס מאפשר לאתר רשומות בטווח הזמן המבוקש בדילוג על היסטוריית ביקורים לא רלוונטית.
+
+**השאילתה שנבדקה:**
+```
+EXPLAIN ANALYZE
+SELECT Patient_ID, First_Name, Last_Name, Phone_Number 
+FROM PATIENTS p
+WHERE EXISTS (
+    SELECT 1 
+    FROM VISITS v 
+    WHERE v.Patient_ID = p.Patient_ID 
+      AND v.Visit_Date BETWEEN '2024-01-01' AND '2024-12-31'
+);
+```
+
+**ניתוח ושיפור זמנים:** זמן הריצה התקצר מ-5.688ms ל-3.973ms. סינון טווח התאריכים (BETWEEN) מתבצע כעת ישירות על עץ האינדקס, מה שמייעל את איתור המטופלים שביקרו בשנה הספציפית.
+
+<br><b>זמן ריצה לפני יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_without_idx_visits_date.png" width="400">
+<br><b>הודעת מערכת על יצירת האינדקס:</b>
+<br><img src="./images/creating_idx_visits_date.png" width="800">
+<br><b>זמן ריצה לאחר יצירת האינדקס:</b>
+<br><img src="./images/quary_runtime_with_idx_visits_date.png" width="400">
+
 
 </div>
