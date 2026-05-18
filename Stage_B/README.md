@@ -357,7 +357,7 @@ ORDER BY Total_Admissions DESC;
 **מטרה ותועלת:** מפתחות זרים אינם מאונדקסים אוטומטית. יצירת אינדקס זה משפרת בצורה ניכרת את הביצועים של פעולות חיבור (JOIN) בין טבלת החדרים לטבלת המיטות.
 
 **השאילתה שנבדקה:**
-```
+```sql
 EXPLAIN ANALYZE
 SELECT r.Room_ID, r.Room_Number, r.Room_Type
 FROM ROOMS r
@@ -379,7 +379,7 @@ WHERE b.Bed_ID IS NULL;
 **מטרה ותועלת:** ייעול דרמטי של שליפות המפלטרות חשבוניות לפי מטופל. קריטי למערכת שצריכה לחפש היסטוריית חיובים של לקוח ספציפי או לבצע תתי-שאילתות מהירות.
 
 **השאילתה שנבדקה:**
-```
+```sql
 EXPLAIN ANALYZE
 SELECT s.First_Name, s.Last_Name, s.Role, COUNT(DISTINCT v.Patient_ID) as Unique_Patients
 FROM STAFF s
@@ -404,7 +404,7 @@ GROUP BY s.Employee_ID, s.First_Name, s.Last_Name, s.Role;
 **מטרה ותועלת:** מערכות בתי חולים מסננות מידע תדיר לפי טווחי תאריכים. האינדקס מאפשר לאתר רשומות בטווח הזמן המבוקש בדילוג על היסטוריית ביקורים לא רלוונטית.
 
 **השאילתה שנבדקה:**
-```
+```sql
 EXPLAIN ANALYZE
 SELECT Patient_ID, First_Name, Last_Name, Phone_Number 
 FROM PATIENTS p
