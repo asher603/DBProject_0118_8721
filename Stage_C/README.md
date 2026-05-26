@@ -4,9 +4,9 @@
 **Student 2 Name:** Shimon Khakshour
 
 ## Introduction
-This repository contains the deliverables for Phase C of our database project. In this phase, we performed a database integration using **Method A**. We integrated our local system with a remote partner's system, merging the schemas and creating a unified perspective of the data. 
+This repository contains the deliverables for Phase C of our database project. In this phase, we performed a database integration using Method B (Foreign Tables). We integrated our local system with a remote partner's system by maintaining both databases and linking them to create a unified perspective of the data. 
 
-As part of the integration, we utilized the existing tables and altered our local schema to support the required integrated data without completely recreating the tables. The unified database allows us to track patient history across both our local clinic and the remote partner's facility.
+As part of the integration, we maintained both original databases. We utilized the partner's tables via the remote_partner schema, querying and joining them directly with our local tables based on shared logical identifiers, such as Patient ID, to extract the unified data. The unified database allows us to track patient history across both our local clinic and the remote partner's facility.
 
 ## Integration Process Overview
 Our main integration script (`Integrate.sql`) pulls together a unified medical timeline. We used a `UNION ALL` approach to combine three main sources of patient data into a single chronological view:
