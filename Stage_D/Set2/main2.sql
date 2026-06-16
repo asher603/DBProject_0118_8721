@@ -6,13 +6,13 @@
 
 DO $$
 DECLARE
-    v_patient_id INT := 60;
-    v_appointment_id INT := 1;
+    v_patient_id INT := 170;
+    v_appointment_id INT := 200;
     v_visit_history refcursor;
     v_visit_record RECORD;
 BEGIN
     -- 1. Call Procedure (Executes multiple DMLs: UPDATE and INSERT)
-    CALL complete_appointment(v_appointment_id, v_patient_id, 150.0);
+    CALL complete_appointment(v_appointment_id, v_patient_id, 150.0, 'Routine Checkup');
     RAISE NOTICE 'ACTION: Appointment % completed and invoice generated.', v_appointment_id;
 
     -- 2. Call Function (Returns Ref Cursor)

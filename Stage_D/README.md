@@ -45,6 +45,11 @@ CREATE SEQUENCE invoices_id_seq;
 ALTER TABLE INVOICES ALTER COLUMN Invoice_ID SET DEFAULT nextval('invoices_id_seq');
 SELECT setval('invoices_id_seq', (SELECT COALESCE(MAX(Invoice_ID), 1) FROM INVOICES));
 
+-- 3rd command:
+CREATE SEQUENCE visits_id_seq;
+ALTER TABLE VISITS ALTER COLUMN Visit_ID SET DEFAULT nextval('visits_id_seq');
+SELECT setval('visits_id_seq', (SELECT COALESCE(MAX(Visit_ID), 1) FROM VISITS));
+
 -- ALTER TABLE commands for Trigger1
 ALTER TABLE PATIENTS ADD COLUMN Last_Updated TIMESTAMP;
 ```
@@ -52,7 +57,8 @@ ALTER TABLE PATIENTS ADD COLUMN Last_Updated TIMESTAMP;
 **Execution Proofs:** ![Alter Table Set 1](./images/alter_table_for_set_1.png)  
 ![Alter Table Set 2 - Status](./images/alter_table_add_status_for_set_2.png)  
 ![Alter Table Set 2 - Sequence](./images/alter_table_make_invoice_id_serial_for_set_2.png)  
-![Alter Table Trigger 1](./images/alter_table_for_trigger_1.png)  
+![Alter Table Set 2 - Visit Sequence](./images/alter_table_make_visit_id_serial_for_set_2.png)  
+![Alter Table Trigger 1](./images/alter_table_for_trigger_1.png)
 
 ---
 
@@ -245,19 +251,32 @@ $$ LANGUAGE plpgsql;
 **Creation Proof:** ![Create Func 2](./images/creating_func2.png)
 
 ### Procedure: `complete_appointment`
-**Description:** Marks an appointment status as 'Completed' and automatically generates a new billing invoice. It relies on the newly established auto-increment sequence for the Invoice ID.
+**Description:** Marks an appointment status as 'Completed', automatically generates a new billing invoice using the auto-increment sequence, and inserts a new record into the VISITS table.
 
 **Code:**
 ```sql
 -- ==============================================================================
 -- Procedure: complete_appointment
--- Description: Marks an appointment status as 'Completed' and automatically 
---              generates a new billing invoice using the auto-increment sequence.
+-- Description: Marks an appointment status as 'Completed', automatically 
+--              generates a new billing invoice using the auto-increment sequence,
+--              and inserts a new record into the VISITS table.
 -- ==============================================================================
 
-CREATE OR REPLACE PROCEDURE complete_appointment(p_appointment_id INT, p_patient_id INT, p_cost DECIMAL)
+CREATE OR REPLACE PROCEDURE complete_appointment(
+    p_appointment_id INT, 
+    p_patient_id INT, 
+    p_cost DECIMAL,
+    p_diagnosis VARCHAR
+)
 LANGUAGE plpgsql AS $$
+DECLARE
+    v_employee_id INT; -- Internal variable to hold the fetched Employee_ID
 BEGIN
+    -- Fetch the associated Employee_ID from the APPOINTMENTS table
+    SELECT Employee_ID INTO v_employee_id 
+    FROM APPOINTMENTS 
+    WHERE Appointment_ID = p_appointment_id;
+
     -- DML Command 1: Update appointment status
     UPDATE APPOINTMENTS
     SET Status = 'Completed'
@@ -266,6 +285,10 @@ BEGIN
     -- DML Command 2: Insert a new invoice for this patient
     INSERT INTO INVOICES (Total_Amount, Billing_Date, Patient_ID)
     VALUES (p_cost, CURRENT_DATE, p_patient_id);
+    
+    -- DML Command 3: Insert a new visit record for this patient
+    INSERT INTO VISITS (Visit_Date, Diagnosis, Patient_ID, Employee_ID)
+    VALUES (CURRENT_DATE, p_diagnosis, p_patient_id, v_employee_id);
     
 EXCEPTION
     WHEN OTHERS THEN
@@ -276,7 +299,7 @@ $$;
 **Creation Proof:** ![Create Proc 2](./images/creating_proc2.png)
 
 ### Main Program 2
-**Description:** An anonymous DO block that completes an appointment, generates an invoice, and successfully loops through the fetched `refcursor` to print the patient's medical history.
+**Description:** An anonymous DO block that completes an appointment, generates an invoice, inserts a visit record, and iterates over the patient's history Ref Cursor.
 
 **Code:**
 ```sql
@@ -288,13 +311,13 @@ $$;
 
 DO $$
 DECLARE
-    v_patient_id INT := 60;
-    v_appointment_id INT := 1;
+    v_patient_id INT := 170;
+    v_appointment_id INT := 200;
     v_visit_history refcursor;
     v_visit_record RECORD;
 BEGIN
     -- 1. Call Procedure (Executes multiple DMLs: UPDATE and INSERT)
-    CALL complete_appointment(v_appointment_id, v_patient_id, 150.0);
+    CALL complete_appointment(v_appointment_id, v_patient_id, 150.0, 'Routine Checkup');
     RAISE NOTICE 'ACTION: Appointment % completed and invoice generated.', v_appointment_id;
 
     -- 2. Call Function (Returns Ref Cursor)
@@ -322,7 +345,8 @@ $$;
 **Execution Proof:** ![Running Main 2 - Part 1](./images/part1_of_running_main2.png)  
 ![Running Main 2 - Part 2](./images/part2_of_running_main2.png)  
 **Proof For Database Change:** ![Verify Appointment Update](./images/proof_for_appointments_update_in_main2.png)  
-![Verify Invoice Insert](./images/proof_for_invoices_update_in_main2.png)
+![Verify Invoice Insert](./images/proof_for_invoices_insert_in_main2.png) 
+![Verify Visit Insert](./images/proof_for_visits_insert_in_main2.png)
 
 ---
 
