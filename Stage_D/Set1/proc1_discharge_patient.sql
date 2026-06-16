@@ -7,8 +7,6 @@
 CREATE OR REPLACE PROCEDURE discharge_patient(p_admission_id INT)
 LANGUAGE plpgsql AS $$
 DECLARE
-
-
     v_exists INT;
 BEGIN
     -- Implicit cursor to check if the admission exists
