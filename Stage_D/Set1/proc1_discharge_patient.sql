@@ -1,12 +1,14 @@
 -- ==============================================================================
 -- Procedure: discharge_patient
--- Description: Discharges an inpatient by setting their discharge date and 
---              updating the associated bed status to 'Available'.
+-- Description: Discharges an inpatient by setting their discharge date,
+--              so that his bed will now be considered available for new patients.
 -- ==============================================================================
 
 CREATE OR REPLACE PROCEDURE discharge_patient(p_admission_id INT)
 LANGUAGE plpgsql AS $$
 DECLARE
+
+
     v_exists INT;
 BEGIN
     -- Implicit cursor to check if the admission exists
