@@ -1,5 +1,10 @@
+import os
 import psycopg2
 from psycopg2 import Error
+from dotenv import load_dotenv
+
+# Load environment variables from the .env file
+load_dotenv()
 
 class DatabaseManager:
     """
@@ -7,13 +12,13 @@ class DatabaseManager:
     """
 
     def __init__(self):
-        # TODO: Replace with your actual database credentials
+        # Fetch database credentials from environment variables securely
         self.db_config = {
-            "host": "localhost",
-            "database": "your_database_name",
-            "user": "postgres",
-            "password": "your_password",
-            "port": "5432"
+            "host": os.getenv("DB_HOST"),
+            "database": os.getenv("DB_NAME"),
+            "user": os.getenv("DB_USER"),
+            "password": os.getenv("DB_PASSWORD"),
+            "port": os.getenv("DB_PORT", "5432")
         }
         self.connection = None
         self.connect()
@@ -21,6 +26,11 @@ class DatabaseManager:
     def connect(self):
         """Establish a connection to the database."""
         try:
+            # Ensure no essential connection variables are missing
+            if not all([self.db_config["host"], self.db_config["password"]]):
+                print("Error: Missing database credentials in .env file.")
+                return
+
             self.connection = psycopg2.connect(**self.db_config)
             print("Database connection successfully established.")
         except Error as e:
