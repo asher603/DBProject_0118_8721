@@ -7,14 +7,15 @@ from views.pharmacy_view import PharmacyView
 from views.billing_view import BillingView
 from views.reports_view import ReportsView
 from views.inpatient_view import InpatientView
+from views.welcome_view import WelcomeView
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
 
 class HospitalApp(ctk.CTk):
     """
-    Main Application window handling both the initial Login/Welcome Gate 
-    and the central Hospital Management Dashboard.
+    Main Application window handling core routing, sidebar navigation,
+    and managing workspace component layout lifecycles.
     """
     def __init__(self):
         super().__init__()
@@ -25,46 +26,16 @@ class HospitalApp(ctk.CTk):
         # Initialize database link
         self.db_manager = DatabaseManager()
 
-        # ---------------------------------------------------------
-        # INITIAL WELCOME GATE SCREEN (Login/Enter Screen)
-        # ---------------------------------------------------------
-        self.welcome_gate_frame = ctk.CTkFrame(self)
-        self.welcome_gate_frame.pack(fill="both", expand=True)
-        
-        # Center alignment structure for the welcome gate
-        self.welcome_gate_frame.grid_columnconfigure(0, weight=1)
-        self.welcome_gate_frame.grid_rowconfigure((0, 1, 2), weight=1)
-
-        self.lbl_gate_title = ctk.CTkLabel(
-            self.welcome_gate_frame, 
-            text="Hospital Management System", 
-            font=ctk.CTkFont(size=32, weight="bold")
-        )
-        self.lbl_gate_title.grid(row=0, column=0, pady=(60, 10))
-
-        self.lbl_gate_subtitle = ctk.CTkLabel(
-            self.welcome_gate_frame, 
-            text="Production Database Client Application", 
-            font=ctk.CTkFont(size=16, slant="italic")
-        )
-        self.lbl_gate_subtitle.grid(row=1, column=0, pady=10)
-
-        self.btn_enter_system = ctk.CTkButton(
-            self.welcome_gate_frame, 
-            text="Enter System", 
-            font=ctk.CTkFont(size=16, weight="bold"),
-            width=200, 
-            height=45,
-            command=self.unlock_and_load_dashboard
-        )
-        self.btn_enter_system.grid(row=2, column=0, pady=(10, 80))
+        # Load the initial isolated Welcome Gate View component
+        self.welcome_view = WelcomeView(self, on_enter_command=self.unlock_and_load_dashboard)
+        self.welcome_view.pack(fill="both", expand=True)
 
     def unlock_and_load_dashboard(self):
         """
-        Destroys the welcome gate frame and builds the complete main workspace layout.
+        Destroys the welcome gate view and builds the complete main workspace layout.
         """
-        # Destroy the entry frame completely
-        self.welcome_gate_frame.destroy()
+        # Destroy the entry frame view completely
+        self.welcome_view.destroy()
 
         # Configure main dashboard grid layout: 1 row, 2 columns
         self.grid_rowconfigure(0, weight=1)
