@@ -1,7 +1,11 @@
 import customtkinter as ctk
-# Later we will import our views here, for example:
-# from views.patients_view import PatientsView
 from database import DatabaseManager
+from views.patients_view import PatientsView
+from views.staff_depts_view import StaffDeptsView
+from views.outpatient_view import OutpatientView
+from views.pharmacy_view import PharmacyView
+from views.billing_view import BillingView
+from views.reports_view import ReportsView
 
 # Set the initial appearance mode and color theme
 ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
@@ -19,10 +23,10 @@ class HospitalApp(ctk.CTk):
         self.title("Hospital Management System")
         self.geometry("1100x700")
         
-        # Initialize database connection (passed to views later)
+        # Initialize database connection
         self.db_manager = DatabaseManager()
 
-        # Configure main grid layout: 1 row, 2 columns (sidebar and main content area)
+        # Configure main grid layout: 1 row, 2 columns
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -31,7 +35,7 @@ class HospitalApp(ctk.CTk):
         # ---------------------------------------------------------
         self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(9, weight=1) # Push theme selector to the bottom
+        self.sidebar_frame.grid_rowconfigure(9, weight=1)
 
         # Main Logo / Title
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Hospital System", font=ctk.CTkFont(size=22, weight="bold"))
@@ -64,7 +68,7 @@ class HospitalApp(ctk.CTk):
         self.appearance_mode_menu.grid(row=11, column=0, padx=20, pady=(10, 20))
 
         # ---------------------------------------------------------
-        # MAIN CONTENT FRAME (Where the screens will appear)
+        # MAIN CONTENT FRAME
         # ---------------------------------------------------------
         self.main_frame = ctk.CTkFrame(self, corner_radius=10)
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
@@ -73,54 +77,45 @@ class HospitalApp(ctk.CTk):
         self.show_patients()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
-        """Changes the UI theme between Dark, Light, and System default."""
         ctk.set_appearance_mode(new_appearance_mode)
 
     def clear_main_frame(self):
-        """Destroys all widgets currently loaded in the main frame to make room for a new view."""
         for widget in self.main_frame.winfo_children():
             widget.destroy()
 
     # ---------------------------------------------------------
-    # NAVIGATION METHODS
+    # NAVIGATION METHODS (Loading actual views)
     # ---------------------------------------------------------
-
     def show_patients(self):
         self.clear_main_frame()
-        # Placeholder for Patients View
-        lbl = ctk.CTkLabel(self.main_frame, text="Patient Management View\n(Coming Soon)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
-        
-        # Future implementation:
-        # view = PatientsView(self.main_frame, self.db_manager)
-        # view.pack(fill="both", expand=True)
+        view = PatientsView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
     def show_staff(self):
         self.clear_main_frame()
-        lbl = ctk.CTkLabel(self.main_frame, text="Staff & Departments View\n(Coming Soon)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
+        view = StaffDeptsView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
     def show_appointments(self):
         self.clear_main_frame()
-        lbl = ctk.CTkLabel(self.main_frame, text="Appointments & Visits View\n(Coming Soon)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
+        view = OutpatientView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
     def show_pharmacy(self):
         self.clear_main_frame()
-        lbl = ctk.CTkLabel(self.main_frame, text="Pharmacy View\n(Coming Soon)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
+        view = PharmacyView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
     def show_billing(self):
         self.clear_main_frame()
-        lbl = ctk.CTkLabel(self.main_frame, text="Billing & Invoices View\n(Coming Soon)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
+        view = BillingView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
     def show_reports(self):
         self.clear_main_frame()
-        lbl = ctk.CTkLabel(self.main_frame, text="Reports & Advanced Operations\n(Queries & Procedures)", font=ctk.CTkFont(size=24))
-        lbl.place(relx=0.5, rely=0.5, anchor="center")
+        view = ReportsView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
 
 if __name__ == "__main__":
-    # Initialize and run the application
     app = HospitalApp()
     app.mainloop()
