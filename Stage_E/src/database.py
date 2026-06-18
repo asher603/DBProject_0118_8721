@@ -92,8 +92,16 @@ class DatabaseManager:
     # PATIENTS MODULE CRUD OPERATIONS
     # -------------------------------------------------------------------------
 
-    def get_all_patients(self):
-        """Retrieve all patients from the PATIENTS table."""
+    def get_all_patients(self, search_term=None, filter_type="Name"):
+        """Retrieve patients filtered strictly by either exact ID or partial Name."""
+        if search_term:
+            if filter_type == "ID":
+                query = "SELECT * FROM PATIENTS WHERE Patient_ID::text = %s ORDER BY Patient_ID ASC;"
+                return self.execute_read_query(query, (search_term,))
+            else:
+                query = "SELECT * FROM PATIENTS WHERE First_Name ILIKE %s OR Last_Name ILIKE %s ORDER BY Patient_ID ASC;"
+                like_term = f"%{search_term}%"
+                return self.execute_read_query(query, (like_term, like_term))
         query = "SELECT * FROM PATIENTS ORDER BY Patient_ID ASC;"
         return self.execute_read_query(query)
 
@@ -135,19 +143,22 @@ class DatabaseManager:
         query = "SELECT Department_ID, Department_Name FROM DEPARTMENTS ORDER BY Department_Name ASC;"
         return self.execute_read_query(query)
 
-    def get_staff_with_departments(self):
-        """Retrieve staff details along with their department names via JOIN."""
-        query = """
-            SELECT 
-                s.Employee_ID, 
-                s.First_Name, 
-                s.Last_Name, 
-                s.Role, 
-                d.Department_Name 
+    def get_staff_with_departments(self, search_term=None, filter_type="Name"):
+        """Retrieve staff details filtered strictly by partial Name or partial Role."""
+        base_query = """
+            SELECT s.Employee_ID, s.First_Name, s.Last_Name, s.Role, d.Department_Name 
             FROM STAFF s
             JOIN DEPARTMENTS d ON s.Department_ID = d.Department_ID
-            ORDER BY s.Employee_ID ASC;
         """
+        if search_term:
+            like_term = f"%{search_term}%"
+            if filter_type == "Role":
+                query = base_query + " WHERE s.Role ILIKE %s ORDER BY s.Employee_ID ASC;"
+                return self.execute_read_query(query, (like_term,))
+            else:
+                query = base_query + " WHERE s.First_Name ILIKE %s OR s.Last_Name ILIKE %s ORDER BY s.Employee_ID ASC;"
+                return self.execute_read_query(query, (like_term, like_term))
+        query = base_query + " ORDER BY s.Employee_ID ASC;"
         return self.execute_read_query(query)
 
     def get_staff_by_id(self, employee_id):
@@ -183,22 +194,26 @@ class DatabaseManager:
     # APPOINTMENTS & VISITS (STAGE D PROCEDURES / FUNCTIONS INTEGRATION)
     # -------------------------------------------------------------------------
 
-    def get_detailed_appointments(self):
-        """Retrieve all appointments combined with patient and staff names via joins."""
-        query = """
-            SELECT 
-                a.Appointment_ID, 
-                a.Appointment_Date, 
-                p.First_Name || ' ' || p.Last_Name AS Patient_Name, 
-                s.First_Name || ' ' || s.Last_Name AS Staff_Name, 
-                r.Room_Number, 
-                a.Status
+    def get_detailed_appointments(self, search_term=None, filter_type="Patient Name"):
+        """Retrieve appointments filtered by partial Patient Name or partial Staff Name."""
+        base_query = """
+            SELECT a.Appointment_ID, a.Appointment_Date, 
+                   p.First_Name || ' ' || p.Last_Name AS Patient_Name, 
+                   s.First_Name || ' ' || s.Last_Name AS Staff_Name, 
+                   r.Room_Number, a.Status
             FROM APPOINTMENTS a
             JOIN PATIENTS p ON a.Patient_ID = p.Patient_ID
             JOIN STAFF s ON a.Employee_ID = s.Employee_ID
             JOIN ROOMS r ON a.Room_ID = r.Room_ID
-            ORDER BY a.Appointment_Date DESC;
         """
+        if search_term:
+            like_term = f"%{search_term}%"
+            if filter_type == "Staff Name":
+                query = base_query + " WHERE s.First_Name ILIKE %s OR s.Last_Name ILIKE %s ORDER BY a.Appointment_Date DESC;"
+            else:
+                query = base_query + " WHERE p.First_Name ILIKE %s OR p.Last_Name ILIKE %s ORDER BY a.Appointment_Date DESC;"
+            return self.execute_read_query(query, (like_term, like_term))
+        query = base_query + " ORDER BY a.Appointment_Date DESC;"
         return self.execute_read_query(query)
 
     def add_new_appointment(self, appointment_date, patient_id, employee_id, room_id):
@@ -278,25 +293,26 @@ class DatabaseManager:
         query = "DELETE FROM MEDICATIONS WHERE Medication_ID = %s;"
         return self.execute_write_query(query, (medication_id,))
 
-    def get_detailed_prescriptions(self):
-        """
-        Retrieve all prescriptions joined across visits, patients, staff, and medications.
-        Ensures text data descriptions are displayed rather than numeric foreign keys.
-        """
-        query = """
-            SELECT 
-                pr.Prescription_ID,
-                pt.First_Name || ' ' || pt.Last_Name AS Patient_Name,
-                st.First_Name || ' ' || st.Last_Name AS Doctor_Name,
-                md.Medication_Name,
-                pr.Dosage
+    def get_detailed_prescriptions(self, search_term=None, filter_type="Patient Name"):
+        """Retrieve prescriptions filtered by partial Patient Name or partial Medication Name."""
+        base_query = """
+            SELECT pr.Prescription_ID, pt.First_Name || ' ' || pt.Last_Name AS Patient_Name,
+                   st.First_Name || ' ' || st.Last_Name AS Doctor_Name, md.Medication_Name, pr.Dosage
             FROM PRESCRIPTIONS pr
             JOIN VISITS v ON pr.Visit_ID = v.Visit_ID
             JOIN PATIENTS pt ON v.Patient_ID = pt.Patient_ID
             JOIN STAFF st ON v.Employee_ID = st.Employee_ID
             JOIN MEDICATIONS md ON pr.Medication_ID = md.Medication_ID
-            ORDER BY pr.Prescription_ID DESC;
         """
+        if search_term:
+            like_term = f"%{search_term}%"
+            if filter_type == "Medication":
+                query = base_query + " WHERE md.Medication_Name ILIKE %s ORDER BY pr.Prescription_ID DESC;"
+                return self.execute_read_query(query, (like_term,))
+            else:
+                query = base_query + " WHERE pt.First_Name ILIKE %s OR pt.Last_Name ILIKE %s ORDER BY pr.Prescription_ID DESC;"
+                return self.execute_read_query(query, (like_term, like_term))
+        query = base_query + " ORDER BY pr.Prescription_ID DESC;"
         return self.execute_read_query(query)
 
     def add_new_prescription(self, dosage, visit_id, medication_id):
@@ -312,21 +328,22 @@ class DatabaseManager:
     # BILLING & INVOICES MODULE OPERATIONS
     # -------------------------------------------------------------------------
 
-    def get_detailed_invoices(self):
-        """
-        Retrieve all hospital billing records joined with patient names.
-        Replaces numeric foreign IDs with descriptive text strings.
-        """
-        query = """
-            SELECT 
-                i.Invoice_ID,
-                p.First_Name || ' ' || p.Last_Name AS Patient_Name,
-                i.Total_Amount,
-                i.Billing_Date
+    def get_detailed_invoices(self, search_term=None, filter_type="Patient Name"):
+        """Retrieve invoices filtered strictly by exact Invoice ID or partial Patient Name."""
+        base_query = """
+            SELECT i.Invoice_ID, p.First_Name || ' ' || p.Last_Name AS Patient_Name, i.Total_Amount, i.Billing_Date
             FROM INVOICES i
             JOIN PATIENTS p ON i.Patient_ID = p.Patient_ID
-            ORDER BY i.Invoice_ID DESC;
         """
+        if search_term:
+            if filter_type == "Invoice ID":
+                query = base_query + " WHERE i.Invoice_ID::text = %s ORDER BY i.Invoice_ID DESC;"
+                return self.execute_read_query(query, (search_term,))
+            else:
+                query = base_query + " WHERE p.First_Name ILIKE %s OR p.Last_Name ILIKE %s ORDER BY i.Invoice_ID DESC;"
+                like_term = f"%{search_term}%"
+                return self.execute_read_query(query, (like_term, like_term))
+        query = base_query + " ORDER BY i.Invoice_ID DESC;"
         return self.execute_read_query(query)
 
     def add_new_invoice(self, total_amount, billing_date, patient_id):

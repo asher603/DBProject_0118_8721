@@ -19,8 +19,8 @@ class ReportsView(ctk.CTkFrame):
         self.tabview = ctk.CTkTabview(self)
         self.tabview.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
 
-        self.tab_queries = self.tabview.add("Management Reports (Stage B)")
-        self.tab_procedures = self.tabview.add("Advanced Controls (Stage D)")
+        self.tab_queries = self.tabview.add("Management Reports")
+        self.tab_procedures = self.tabview.add("Advanced Controls")
 
         # Setup individual frame blocks
         self.setup_queries_tab()
@@ -40,10 +40,10 @@ class ReportsView(ctk.CTkFrame):
         lbl_desc = ctk.CTkLabel(btn_frame, text="Execute Executive Decisions Data Queries:", font=ctk.CTkFont(weight="bold"))
         lbl_desc.pack(side="left", padx=5)
 
-        self.btn_q1 = ctk.CTkButton(btn_frame, text="2024 Active Patients (Q1)", width=180, command=self.run_patients_2024_report)
+        self.btn_q1 = ctk.CTkButton(btn_frame, text="2024 Active Patients", width=180, command=self.run_patients_2024_report)
         self.btn_q1.pack(side="left", padx=10)
 
-        self.btn_q5 = ctk.CTkButton(btn_frame, text="High Financial Billings (Q5)", width=180, command=self.run_high_billing_report)
+        self.btn_q5 = ctk.CTkButton(btn_frame, text="High Financial Billings", width=180, command=self.run_high_billing_report)
         self.btn_q5.pack(side="left", padx=10)
 
         # Separator Line
