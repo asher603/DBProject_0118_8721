@@ -7,8 +7,8 @@
 * **Database & Driver:** Cloud-hosted PostgreSQL via **Supabase**, utilizing the `psycopg2` driver for secure, direct database communication.
 * **Workflow Architecture:**
   - **CRUD Operations:** Designed full insert, read, update, and delete screens across all 11 tables using a unified auto-increment ID generation policy.
-  - **Data Integration (Foreign Keys):** Implemented relational SQL `JOIN` statements across all views to display descriptive names (e.g., patient names, department names) instead of raw numeric IDs.
-  - **Advanced Components Integration:** Embedded direct operational hooks to trigger complex analytical queries from Stage B, alongside the execution of transactions, stored procedures, and ref cursors from Stage D.
+  - **Data Integration (Foreign Keys):** Implemented relational SQL `JOIN` statements across all views to display descriptive names (e.g., patient names, department names, room numbers) instead of raw numeric IDs.
+  - **Advanced Components Integration:** Embedded direct operational hooks to trigger complex analytical queries from Stage B, alongside the execution of transactions, stored procedures, and scalar functions from Stage D.
 
 ---
 
@@ -17,15 +17,12 @@
 ### Prerequisites
 1. Install the required Python libraries:
 
-    ```bash
-    pip install -r requirements.txt
-    ```
-   
-   
+  ```bash
+   pip install -r requirements.txt
+  ```
 
-2. Ensure your `.env` file is present in the root directory with valid Supabase credentials:
-   
-   ```bash
+2. Ensure your .env file is present in the root directory with valid Supabase credentials:
+  ```bash
    DB_HOST=
    DB_NAME=
    DB_USER=
@@ -34,8 +31,7 @@
    ```
 
 ### Execution
-Run the following command from the terminal inside the `Stage_E` directory:
-
+Run the following command from the terminal inside the Stage_E directory:
 ```bash
 python src/main.py
 ```
@@ -44,23 +40,41 @@ python src/main.py
 
 ## 3. Application Screenshots
 
-### Patient Directory & Registration
-![Patients View](./images/01_patients_view.png)
+### System Screens
 
-### Dynamic Update & Fetch Operations
-![Patients Update](./images/02_patients_update.png)
+#### Patient Management Screen
+![Patients View](./images/patients_view.png)
 
-### Staff Directory with Dropdown Mappings
-![Staff and Departments View](./images/03_staff_view.png)
+#### Staff & Departments Screen
+![Staff & Departments View](./images/staff_depts_view.png)
 
-### Appointments Scheduling & Stage D Procedure
-![Appointments and Visits](./images/04_outpatient_view.png)
+#### Appointments & Visits Screen
+![Appointments & Visits View](./images/outpatient_view.png)
 
-### Drug Formulary & Inventory Management
-![Pharmacy and Medications](./images/05_pharmacy_view.png)
+#### Inpatient & Wards Screen
+![Inpatient & Wards View](./images/inpatient_view.png)
 
-### Financial Ledger & Invoices Registry
-![Billing and Invoices](./images/06_billing_view.png)
+#### Pharmacy Screen
+![Pharmacy View](./images/pharmacy_view.png)
 
-### Executive Analytical Reports (Stage B & D Controls)
-![Reports and Operations](./images/07_reports_view.png)
+#### Billing & Invoices Screen
+![Billing & Invoices View](./images/billing_view.png)
+
+#### Reports & Operations Screen
+![Reports & Operations View](./images/reports_view.png)
+
+---
+
+### Database Operations In The Reports & Operations Screen
+
+#### Stage B Query 1 (2024 Active Patients)
+![Query 1](./images/2024_active_patients.png)
+
+#### Stage B Query 5 (High Financial Billings)
+![Query 5](./images/high_financial_billings.png)
+
+#### Stage D Function (Calculate Available Beds)
+![Get Available Beds](./images/get_available_beds.png)
+
+#### Stage D Procedure (Discharge & Liberate Bed)
+![Discharge Patient](./images/discharge_patient.png)

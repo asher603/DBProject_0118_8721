@@ -6,6 +6,7 @@ from views.outpatient_view import OutpatientView
 from views.pharmacy_view import PharmacyView
 from views.billing_view import BillingView
 from views.reports_view import ReportsView
+from views.inpatient_view import InpatientView  # Imported newly added view
 
 # Set the initial appearance mode and color theme
 ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
@@ -21,7 +22,7 @@ class HospitalApp(ctk.CTk):
 
         # --- Window Configuration ---
         self.title("Hospital Management System")
-        self.geometry("1100x700")
+        self.geometry("1150x750")
         
         # Initialize database connection
         self.db_manager = DatabaseManager()
@@ -35,7 +36,7 @@ class HospitalApp(ctk.CTk):
         # ---------------------------------------------------------
         self.sidebar_frame = ctk.CTkFrame(self, width=220, corner_radius=0)
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
-        self.sidebar_frame.grid_rowconfigure(9, weight=1)
+        self.sidebar_frame.grid_rowconfigure(12, weight=1)
 
         # Main Logo / Title
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Hospital System", font=ctk.CTkFont(size=22, weight="bold"))
@@ -51,14 +52,17 @@ class HospitalApp(ctk.CTk):
         self.btn_appointments = ctk.CTkButton(self.sidebar_frame, text="Appointments & Visits", command=self.show_appointments)
         self.btn_appointments.grid(row=3, column=0, padx=20, pady=10)
 
+        self.btn_inpatient = ctk.CTkButton(self.sidebar_frame, text="Inpatient & Wards", command=self.show_inpatient)
+        self.btn_inpatient.grid(row=4, column=0, padx=20, pady=10)
+
         self.btn_pharmacy = ctk.CTkButton(self.sidebar_frame, text="Pharmacy", command=self.show_pharmacy)
-        self.btn_pharmacy.grid(row=4, column=0, padx=20, pady=10)
+        self.btn_pharmacy.grid(row=5, column=0, padx=20, pady=10)
 
         self.btn_billing = ctk.CTkButton(self.sidebar_frame, text="Billing & Invoices", command=self.show_billing)
-        self.btn_billing.grid(row=5, column=0, padx=20, pady=10)
+        self.btn_billing.grid(row=6, column=0, padx=20, pady=10)
 
         self.btn_reports = ctk.CTkButton(self.sidebar_frame, text="Reports & Operations", command=self.show_reports)
-        self.btn_reports.grid(row=6, column=0, padx=20, pady=10)
+        self.btn_reports.grid(row=7, column=0, padx=20, pady=10)
 
         # Appearance Mode Selector (Dark/Light Mode)
         self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
@@ -99,6 +103,11 @@ class HospitalApp(ctk.CTk):
     def show_appointments(self):
         self.clear_main_frame()
         view = OutpatientView(self.main_frame, self.db_manager)
+        view.pack(fill="both", expand=True)
+
+    def show_inpatient(self):
+        self.clear_main_frame()
+        view = InpatientView(self.main_frame, self.db_manager)
         view.pack(fill="both", expand=True)
 
     def show_pharmacy(self):
