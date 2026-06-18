@@ -6,28 +6,67 @@ from views.outpatient_view import OutpatientView
 from views.pharmacy_view import PharmacyView
 from views.billing_view import BillingView
 from views.reports_view import ReportsView
-from views.inpatient_view import InpatientView  # Imported newly added view
+from views.inpatient_view import InpatientView
 
-# Set the initial appearance mode and color theme
-ctk.set_appearance_mode("System")  # Options: "System", "Dark", "Light"
-ctk.set_default_color_theme("blue")  # Options: "blue", "green", "dark-blue"
+ctk.set_appearance_mode("System")
+ctk.set_default_color_theme("blue")
 
 class HospitalApp(ctk.CTk):
     """
-    Main Application Window for the Hospital Management System.
-    Handles the UI layout, sidebar navigation, and loading different views.
+    Main Application window handling both the initial Login/Welcome Gate 
+    and the central Hospital Management Dashboard.
     """
     def __init__(self):
         super().__init__()
 
-        # --- Window Configuration ---
         self.title("Hospital Management System")
         self.geometry("1150x750")
         
-        # Initialize database connection
+        # Initialize database link
         self.db_manager = DatabaseManager()
 
-        # Configure main grid layout: 1 row, 2 columns
+        # ---------------------------------------------------------
+        # INITIAL WELCOME GATE SCREEN (Login/Enter Screen)
+        # ---------------------------------------------------------
+        self.welcome_gate_frame = ctk.CTkFrame(self)
+        self.welcome_gate_frame.pack(fill="both", expand=True)
+        
+        # Center alignment structure for the welcome gate
+        self.welcome_gate_frame.grid_columnconfigure(0, weight=1)
+        self.welcome_gate_frame.grid_rowconfigure((0, 1, 2), weight=1)
+
+        self.lbl_gate_title = ctk.CTkLabel(
+            self.welcome_gate_frame, 
+            text="Hospital Management System", 
+            font=ctk.CTkFont(size=32, weight="bold")
+        )
+        self.lbl_gate_title.grid(row=0, column=0, pady=(60, 10))
+
+        self.lbl_gate_subtitle = ctk.CTkLabel(
+            self.welcome_gate_frame, 
+            text="Production Database Client Application", 
+            font=ctk.CTkFont(size=16, slant="italic")
+        )
+        self.lbl_gate_subtitle.grid(row=1, column=0, pady=10)
+
+        self.btn_enter_system = ctk.CTkButton(
+            self.welcome_gate_frame, 
+            text="Enter System", 
+            font=ctk.CTkFont(size=16, weight="bold"),
+            width=200, 
+            height=45,
+            command=self.unlock_and_load_dashboard
+        )
+        self.btn_enter_system.grid(row=2, column=0, pady=(10, 80))
+
+    def unlock_and_load_dashboard(self):
+        """
+        Destroys the welcome gate frame and builds the complete main workspace layout.
+        """
+        # Destroy the entry frame completely
+        self.welcome_gate_frame.destroy()
+
+        # Configure main dashboard grid layout: 1 row, 2 columns
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -38,11 +77,11 @@ class HospitalApp(ctk.CTk):
         self.sidebar_frame.grid(row=0, column=0, sticky="nsew")
         self.sidebar_frame.grid_rowconfigure(12, weight=1)
 
-        # Main Logo / Title
+        # Main Sidebar Header
         self.logo_label = ctk.CTkLabel(self.sidebar_frame, text="Hospital System", font=ctk.CTkFont(size=22, weight="bold"))
         self.logo_label.grid(row=0, column=0, padx=20, pady=(20, 30))
 
-        # Navigation Buttons
+        # Core Navigation Buttons
         self.btn_patients = ctk.CTkButton(self.sidebar_frame, text="Patient Management", command=self.show_patients)
         self.btn_patients.grid(row=1, column=0, padx=20, pady=10)
 
@@ -64,7 +103,7 @@ class HospitalApp(ctk.CTk):
         self.btn_reports = ctk.CTkButton(self.sidebar_frame, text="Reports & Operations", command=self.show_reports)
         self.btn_reports.grid(row=7, column=0, padx=20, pady=10)
 
-        # Appearance Mode Selector (Dark/Light Mode)
+        # Appearance Customization Mode Selector
         self.appearance_mode_label = ctk.CTkLabel(self.sidebar_frame, text="Appearance Mode:", anchor="w")
         self.appearance_mode_label.grid(row=10, column=0, padx=20, pady=(10, 0))
         
@@ -72,12 +111,12 @@ class HospitalApp(ctk.CTk):
         self.appearance_mode_menu.grid(row=11, column=0, padx=20, pady=(10, 20))
 
         # ---------------------------------------------------------
-        # MAIN CONTENT FRAME
+        # MAIN CONTENT DISPLAY FRAME
         # ---------------------------------------------------------
         self.main_frame = ctk.CTkFrame(self, corner_radius=10)
         self.main_frame.grid(row=0, column=1, sticky="nsew", padx=20, pady=20)
         
-        # Load the default screen upon startup
+        # Load the default operational workspace screen (Patients)
         self.show_patients()
 
     def change_appearance_mode_event(self, new_appearance_mode: str):
@@ -88,7 +127,7 @@ class HospitalApp(ctk.CTk):
             widget.destroy()
 
     # ---------------------------------------------------------
-    # NAVIGATION METHODS (Loading actual views)
+    # WORKSPACE VIEW GENERATOR ROUTINES
     # ---------------------------------------------------------
     def show_patients(self):
         self.clear_main_frame()

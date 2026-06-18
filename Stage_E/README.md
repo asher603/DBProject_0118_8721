@@ -42,6 +42,9 @@ python src/main.py
 
 ### System Screens
 
+#### Welcome Gate Screen
+![Welcome Gate View](./images/welcome_gate_view.png)
+
 #### Patient Management Screen
 ![Patients View](./images/patients_view.png)
 
