@@ -1,6 +1,7 @@
 import os
 import psycopg2
 from psycopg2 import Error
+from psycopg2.extras import RealDictCursor  # Added for dynamic dictionary row mapping
 from dotenv import load_dotenv
 
 # Load environment variables from the .env file
@@ -9,6 +10,7 @@ load_dotenv()
 class DatabaseManager:
     """
     A class to manage all database connections and operations for the Hospital Management System.
+    Updated for Stage E to support dynamic metadata-driven CRUD and extended subprograms.
     """
 
     def __init__(self):
@@ -42,17 +44,73 @@ class DatabaseManager:
             self.connection.close()
             print("Database connection closed.")
 
-    def execute_read_query(self, query, params=None):
+    # -------------------------------------------------------------------------
+    # STAGE E STABLE GENERIC EXECUTORS (Dictionary-backed Rows)
+    # -------------------------------------------------------------------------
+
+    def fetch_all(self, query, params=None):
         """
-        Execute a SELECT query and return the fetched records along with column names.
+        Execute a SELECT query and return rows as dictionaries {column_name: value}.
+        Crucial for metadata-driven dynamic CRUD views.
         """
         if not self.connection or self.connection.closed:
             self.connect()
-        
         if not self.connection:
-            print("Query execution aborted: No active database connection.")
+            return []
+        try:
+            # RealDictCursor formats result records as Python dictionaries dynamically
+            cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+            cursor.execute(query, params)
+            records = cursor.fetchall()
+            cursor.close()
+            return records
+        except Error as e:
+            print(f"Error executing fetch_all query: {e}")
+            return []
+
+    def fetch_one(self, query, params=None):
+        """Execute a SELECT query and return a single row record as a dictionary."""
+        if not self.connection or self.connection.closed:
+            self.connect()
+        if not self.connection:
+            return None
+        try:
+            cursor = self.connection.cursor(cursor_factory=RealDictCursor)
+            cursor.execute(query, params)
+            record = cursor.fetchone()
+            cursor.close()
+            return record
+        except Error as e:
+            print(f"Error executing fetch_one query: {e}")
+            return None
+
+    def execute_non_query(self, query, params=None):
+        """Execute an INSERT, UPDATE, DELETE, or CALL statement with full transaction commit."""
+        if not self.connection or self.connection.closed:
+            self.connect()
+        if not self.connection:
+            return False
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute(query, params)
+            self.connection.commit()
+            cursor.close()
+            return True
+        except Error as e:
+            print(f"Error executing non-query transaction: {e}")
+            self.connection.rollback()
+            raise e  # Propagate the database error exception up to the GUI alerts display
+
+    # -------------------------------------------------------------------------
+    # LEGACY / BACKWARD COMPATIBILITY EXECUTORS
+    # -------------------------------------------------------------------------
+
+    def execute_read_query(self, query, params=None):
+        """Legacy tuple-based query reader retained for backward compatibility."""
+        if not self.connection or self.connection.closed:
+            self.connect()
+        if not self.connection:
             return None, None
-        
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, params)
@@ -65,16 +123,11 @@ class DatabaseManager:
             return None, None
 
     def execute_write_query(self, query, params=None):
-        """
-        Execute an INSERT, UPDATE, or DELETE query.
-        """
+        """Legacy DML writer retained for backward compatibility."""
         if not self.connection or self.connection.closed:
             self.connect()
-
         if not self.connection:
-            print("Transaction aborted: No active database connection.")
             return False
-
         try:
             cursor = self.connection.cursor()
             cursor.execute(query, params)
@@ -87,152 +140,25 @@ class DatabaseManager:
             return False
 
     # -------------------------------------------------------------------------
-    # PATIENTS MODULE CRUD OPERATIONS
+    # EXTENDED APPOINTMENTS & SUBPROGRAMS MODULE READERS
     # -------------------------------------------------------------------------
 
-    def get_all_patients(self, search_term=None, filter_type="Name"):
-        """Retrieve patients filtered strictly by either exact ID or partial Name."""
-        if search_term:
-            if filter_type == "ID":
-                query = "SELECT * FROM PATIENTS WHERE Patient_ID::text = %s ORDER BY Patient_ID ASC;"
-                return self.execute_read_query(query, (search_term,))
-            else:
-                query = "SELECT * FROM PATIENTS WHERE First_Name ILIKE %s OR Last_Name ILIKE %s ORDER BY Patient_ID ASC;"
-                like_term = f"%{search_term}%"
-                return self.execute_read_query(query, (like_term, like_term))
-        query = "SELECT * FROM PATIENTS ORDER BY Patient_ID ASC;"
-        return self.execute_read_query(query)
-
-    def get_patient_by_id(self, patient_id):
-        """Fetch a specific patient's details for the UPDATE screen."""
-        query = "SELECT * FROM PATIENTS WHERE Patient_ID = %s;"
-        return self.execute_read_query(query, (patient_id,))
-
-    def add_new_patient(self, first_name, last_name, dob, phone, address):
-        """Insert a new patient profile into the PATIENTS table."""
-        query = """
-            INSERT INTO PATIENTS (First_Name, Last_Name, Date_Of_Birth, Phone_Number, Address)
-            VALUES (%s, %s, %s, %s, %s);
+    def call_complete_appointment_procedure(self, appointment_id, patient_id, cost, diagnosis, medication_id=None, dosage=None):
         """
-        params = (first_name, last_name, dob, phone if phone else None, address if address else None)
-        return self.execute_write_query(query, params)
-    
-    def update_patient_info(self, patient_id, first_name, last_name, phone, address):
-        """Update basic information for a specific patient."""
-        query = """
-            UPDATE PATIENTS 
-            SET First_Name = %s, Last_Name = %s, Phone_Number = %s, Address = %s 
-            WHERE Patient_ID = %s;
+        Invoke the updated Stage D complete_appointment stored procedure safely.
+        Accepts optional parameters to accommodate dynamic prescription generation.
         """
-        params = (first_name, last_name, phone, address, patient_id)
-        return self.execute_write_query(query, params)
-
-    def delete_patient(self, patient_id):
-        """Delete a patient record completely by their unique ID."""
-        query = "DELETE FROM PATIENTS WHERE Patient_ID = %s;"
-        return self.execute_write_query(query, (patient_id,))
-
-    # -------------------------------------------------------------------------
-    # STAFF & DEPARTMENTS CRUD OPERATIONS
-    # -------------------------------------------------------------------------
-
-    def get_all_departments(self):
-        """Retrieve all records from DEPARTMENTS for UI dropdown configurations."""
-        query = "SELECT Department_ID, Department_Name FROM DEPARTMENTS ORDER BY Department_Name ASC;"
-        return self.execute_read_query(query)
-
-    def get_staff_with_departments(self, search_term=None, filter_type="Name"):
-        """Retrieve staff details filtered strictly by partial Name or partial Role."""
-        base_query = """
-            SELECT s.Employee_ID, s.First_Name, s.Last_Name, s.Role, d.Department_Name 
-            FROM STAFF s
-            JOIN DEPARTMENTS d ON s.Department_ID = d.Department_ID
-        """
-        if search_term:
-            like_term = f"%{search_term}%"
-            if filter_type == "Role":
-                query = base_query + " WHERE s.Role ILIKE %s ORDER BY s.Employee_ID ASC;"
-                return self.execute_read_query(query, (like_term,))
-            else:
-                query = base_query + " WHERE s.First_Name ILIKE %s OR s.Last_Name ILIKE %s ORDER BY s.Employee_ID ASC;"
-                return self.execute_read_query(query, (like_term, like_term))
-        query = base_query + " ORDER BY s.Employee_ID ASC;"
-        return self.execute_read_query(query)
-
-    def get_staff_by_id(self, employee_id):
-        """Fetch basic staff properties by target ID."""
-        query = "SELECT Employee_ID, First_Name, Last_Name, Role, Department_ID FROM STAFF WHERE Employee_ID = %s;"
-        return self.execute_read_query(query, (employee_id,))
-
-    def add_new_staff(self, first_name, last_name, role, department_id):
-        """Insert a new staff record. Employee_ID auto-generates via sequence."""
-        query = """
-            INSERT INTO STAFF (First_Name, Last_Name, Role, Department_ID)
-            VALUES (%s, %s, %s, %s);
-        """
-        params = (first_name, last_name, role, department_id)
-        return self.execute_write_query(query, params)
-
-    def update_staff_info(self, employee_id, first_name, last_name, role, department_id):
-        """Modify staff details matching target identifiers."""
-        query = """
-            UPDATE STAFF 
-            SET First_Name = %s, Last_Name = %s, Role = %s, Department_ID = %s 
-            WHERE Employee_ID = %s;
-        """
-        params = (first_name, last_name, role, department_id, employee_id)
-        return self.execute_write_query(query, params)
-
-    def delete_staff(self, employee_id):
-        """Safely drop targeted employee indexes matching unique keys."""
-        query = "DELETE FROM STAFF WHERE Employee_ID = %s;"
-        return self.execute_write_query(query, (employee_id,))
-
-    # -------------------------------------------------------------------------
-    # APPOINTMENTS & VISITS OPERATIONS
-    # -------------------------------------------------------------------------
-
-    def get_detailed_appointments(self, search_term=None, filter_type="Patient Name"):
-        """Retrieve appointments filtered by partial Patient Name or partial Staff Name."""
-        base_query = """
-            SELECT a.Appointment_ID, a.Appointment_Date, 
-                   p.First_Name || ' ' || p.Last_Name AS Patient_Name, 
-                   s.First_Name || ' ' || s.Last_Name AS Staff_Name, 
-                   r.Room_Number, a.Status
-            FROM APPOINTMENTS a
-            JOIN PATIENTS p ON a.Patient_ID = p.Patient_ID
-            JOIN STAFF s ON a.Employee_ID = s.Employee_ID
-            JOIN ROOMS r ON a.Room_ID = r.Room_ID
-        """
-        if search_term:
-            like_term = f"%{search_term}%"
-            if filter_type == "Staff Name":
-                query = base_query + " WHERE s.First_Name ILIKE %s OR s.Last_Name ILIKE %s ORDER BY a.Appointment_Date DESC;"
-            else:
-                query = base_query + " WHERE p.First_Name ILIKE %s OR p.Last_Name ILIKE %s ORDER BY a.Appointment_Date DESC;"
-            return self.execute_read_query(query, (like_term, like_term))
-        query = base_query + " ORDER BY a.Appointment_Date DESC;"
-        return self.execute_read_query(query)
-
-    def add_new_appointment(self, appointment_date, patient_id, employee_id, room_id):
-        """Insert a new record into APPOINTMENTS."""
-        query = """
-            INSERT INTO APPOINTMENTS (Appointment_Date, Patient_ID, Employee_ID, Room_ID, Status)
-            VALUES (%s, %s, %s, %s, 'Scheduled');
-        """
-        params = (appointment_date, patient_id, employee_id, room_id)
-        return self.execute_write_query(query, params)
-
-    def call_complete_appointment_procedure(self, appointment_id, patient_id, cost, diagnosis):
-        """Invoke Stage D complete_appointment stored procedure safely."""
         if not self.connection or self.connection.closed:
             self.connect()
         if not self.connection:
             return False
         try:
             cursor = self.connection.cursor()
-            cursor.execute("CALL complete_appointment(%s, %s, %s, %s);", 
-                           (int(appointment_id), int(patient_id), float(cost), diagnosis))
+            # Updated from 4 parameters to 6 parameters to support prescription data flow
+            cursor.execute("CALL complete_appointment(%s, %s, %s, %s, %s, %s);", 
+                           (int(appointment_id), int(patient_id), float(cost), diagnosis, 
+                            int(medication_id) if medication_id else None, 
+                            dosage if dosage else None))
             self.connection.commit()
             cursor.close()
             return True
@@ -261,238 +187,9 @@ class DatabaseManager:
             print(f"Error consuming get_patient_history ref cursor: {e}")
             self.connection.rollback()
             return None
-        
-    # -------------------------------------------------------------------------
-    # PHARMACY & MEDICATIONS MODULE OPERATIONS
-    # -------------------------------------------------------------------------
-
-    def get_all_medications(self):
-        """Retrieve all catalog medications ordered by name."""
-        query = "SELECT Medication_ID, Medication_Name FROM MEDICATIONS ORDER BY Medication_Name ASC;"
-        return self.execute_read_query(query)
-
-    def get_medication_by_id(self, medication_id):
-        """Fetch a specific medication item by ID."""
-        query = "SELECT Medication_ID, Medication_Name FROM MEDICATIONS WHERE Medication_ID = %s;"
-        return self.execute_read_query(query, (medication_id,))
-
-    def add_new_medication(self, medication_name):
-        """Insert a new drug item into the MEDICATIONS catalog."""
-        query = "INSERT INTO MEDICATIONS (Medication_Name) VALUES (%s);"
-        return self.execute_write_query(query, (medication_name,))
-
-    def update_medication_info(self, medication_id, medication_name):
-        """Modify a specific medication catalog name."""
-        query = "UPDATE MEDICATIONS SET Medication_Name = %s WHERE Medication_ID = %s;"
-        return self.execute_write_query(query, (medication_name, medication_id))
-
-    def delete_medication(self, medication_id):
-        """Safely drop a medication item from the formulary catalog index."""
-        query = "DELETE FROM MEDICATIONS WHERE Medication_ID = %s;"
-        return self.execute_write_query(query, (medication_id,))
-
-    def get_detailed_prescriptions(self, search_term=None, filter_type="Patient Name"):
-        """Retrieve prescriptions filtered by partial Patient Name or partial Medication Name."""
-        base_query = """
-            SELECT pr.Prescription_ID, pt.First_Name || ' ' || pt.Last_Name AS Patient_Name,
-                   st.First_Name || ' ' || st.Last_Name AS Doctor_Name, md.Medication_Name, pr.Dosage
-            FROM PRESCRIPTIONS pr
-            JOIN VISITS v ON pr.Visit_ID = v.Visit_ID
-            JOIN PATIENTS pt ON v.Patient_ID = pt.Patient_ID
-            JOIN STAFF st ON v.Employee_ID = st.Employee_ID
-            JOIN MEDICATIONS md ON pr.Medication_ID = md.Medication_ID
-        """
-        if search_term:
-            like_term = f"%{search_term}%"
-            if filter_type == "Medication":
-                query = base_query + " WHERE md.Medication_Name ILIKE %s ORDER BY pr.Prescription_ID DESC;"
-                return self.execute_read_query(query, (like_term,))
-            else:
-                query = base_query + " WHERE pt.First_Name ILIKE %s OR pt.Last_Name ILIKE %s ORDER BY pr.Prescription_ID DESC;"
-                return self.execute_read_query(query, (like_term, like_term))
-        query = base_query + " ORDER BY pr.Prescription_ID DESC;"
-        return self.execute_read_query(query)
-
-    def add_new_prescription(self, dosage, visit_id, medication_id):
-        """Insert a new patient prescription."""
-        query = """
-            INSERT INTO PRESCRIPTIONS (Dosage, Visit_ID, Medication_ID)
-            VALUES (%s, %s, %s);
-        """
-        params = (dosage, visit_id, medication_id)
-        return self.execute_write_query(query, params)
-    
-    # -------------------------------------------------------------------------
-    # BILLING & INVOICES MODULE OPERATIONS
-    # -------------------------------------------------------------------------
-
-    def get_detailed_invoices(self, search_term=None, filter_type="Patient Name"):
-        """Retrieve invoices filtered strictly by exact Invoice ID or partial Patient Name."""
-        base_query = """
-            SELECT i.Invoice_ID, p.First_Name || ' ' || p.Last_Name AS Patient_Name, i.Total_Amount, i.Billing_Date
-            FROM INVOICES i
-            JOIN PATIENTS p ON i.Patient_ID = p.Patient_ID
-        """
-        if search_term:
-            if filter_type == "Invoice ID":
-                query = base_query + " WHERE i.Invoice_ID::text = %s ORDER BY i.Invoice_ID DESC;"
-                return self.execute_read_query(query, (search_term,))
-            else:
-                query = base_query + " WHERE p.First_Name ILIKE %s OR p.Last_Name ILIKE %s ORDER BY i.Invoice_ID DESC;"
-                like_term = f"%{search_term}%"
-                return self.execute_read_query(query, (like_term, like_term))
-        query = base_query + " ORDER BY i.Invoice_ID DESC;"
-        return self.execute_read_query(query)
-
-    def add_new_invoice(self, total_amount, billing_date, patient_id):
-        """Insert a new financial billing invoice."""
-        query = """
-            INSERT INTO INVOICES (Total_Amount, Billing_Date, Patient_ID)
-            VALUES (%s, %s, %s);
-        """
-        params = (total_amount, billing_date, patient_id)
-        return self.execute_write_query(query, params)
-
-    def get_invoice_by_id(self, invoice_id):
-        """Fetch basic structured properties matching a target Invoice ID."""
-        query = "SELECT Invoice_ID, Total_Amount, Billing_Date, Patient_ID FROM INVOICES WHERE Invoice_ID = %s;"
-        return self.execute_read_query(query, (invoice_id,))
-
-    def update_invoice_info(self, invoice_id, total_amount, billing_date, patient_id):
-        """Modify tracking variables matching target billing identifiers."""
-        query = """
-            UPDATE INVOICES 
-            SET Total_Amount = %s, Billing_Date = %s, Patient_ID = %s 
-            WHERE Invoice_ID = %s;
-        """
-        params = (total_amount, billing_date, patient_id, invoice_id)
-        return self.execute_write_query(query, params)
-
-    def delete_invoice(self, invoice_id):
-        """Safely drop targeting financial ledger records."""
-        query = "DELETE FROM INVOICES WHERE Invoice_ID = %s;"
-        return self.execute_write_query(query, (invoice_id,))
-
-    # -------------------------------------------------------------------------
-    # ROOMS, BEDS & ADMISSIONS MODULE OPERATIONS (NEWLY ADDED CRUD)
-    # -------------------------------------------------------------------------
-
-    def get_all_rooms(self):
-        query = """
-            SELECT r.Room_ID, r.Room_Number, r.Room_Type, d.Department_Name 
-            FROM ROOMS r
-            JOIN DEPARTMENTS d ON r.Department_ID = d.Department_ID
-            ORDER BY r.Room_Number ASC;
-        """
-        return self.execute_read_query(query)
-
-    def get_room_by_id(self, room_id):
-        query = "SELECT Room_ID, Room_Number, Room_Type, Department_ID FROM ROOMS WHERE Room_ID = %s;"
-        return self.execute_read_query(query, (room_id,))
-
-    def add_new_room(self, room_number, room_type, department_id):
-        query = "INSERT INTO ROOMS (Room_Number, Room_Type, Department_ID) VALUES (%s, %s, %s);"
-        return self.execute_write_query(query, (room_number, room_type, department_id))
-
-    def update_room_info(self, room_id, room_number, room_type, department_id):
-        query = "UPDATE ROOMS SET Room_Number = %s, Room_Type = %s, Department_ID = %s WHERE Room_ID = %s;"
-        return self.execute_write_query(query, (room_number, room_type, department_id, room_id))
-
-    def delete_room(self, room_id):
-        query = "DELETE FROM ROOMS WHERE Room_ID = %s;"
-        return self.execute_write_query(query, (room_id,))
-
-    def get_all_beds(self):
-        query = """
-            SELECT b.Bed_ID, b.Bed_Number, r.Room_Number 
-            FROM BEDS b
-            JOIN ROOMS r ON b.Room_ID = r.Room_ID
-            ORDER BY b.Bed_Number ASC;
-        """
-        return self.execute_read_query(query)
-
-    def get_bed_by_id(self, bed_id):
-        query = "SELECT Bed_ID, Bed_Number, Room_ID FROM BEDS WHERE Bed_ID = %s;"
-        return self.execute_read_query(query, (bed_id,))
-
-    def add_new_bed(self, bed_number, room_id):
-        query = "INSERT INTO BEDS (Bed_Number, Room_ID) VALUES (%s, %s);"
-        return self.execute_write_query(query, (bed_number, room_id))
-
-    def update_bed_info(self, bed_id, bed_number, room_id):
-        query = "UPDATE BEDS SET Bed_Number = %s, Room_ID = %s WHERE Bed_ID = %s;"
-        return self.execute_write_query(query, (bed_number, room_id, bed_id))
-
-    def delete_bed(self, bed_id):
-        query = "DELETE FROM BEDS WHERE Bed_ID = %s;"
-        return self.execute_write_query(query, (bed_id,))
-
-    def get_detailed_admissions(self):
-        query = """
-            SELECT a.Admission_ID, p.First_Name || ' ' || p.Last_Name AS Patient_Name, 
-                   b.Bed_Number, a.Admission_Date, a.Discharge_Date
-            FROM INPATIENT_ADMISSIONS a
-            JOIN PATIENTS p ON a.Patient_ID = p.Patient_ID
-            JOIN BEDS b ON a.Bed_ID = b.Bed_ID
-            ORDER BY a.Admission_Date DESC;
-        """
-        return self.execute_read_query(query)
-
-    def get_admission_by_id(self, admission_id):
-        query = "SELECT Admission_ID, Admission_Date, Discharge_Date, Patient_ID, Bed_ID FROM INPATIENT_ADMISSIONS WHERE Admission_ID = %s;"
-        return self.execute_read_query(query, (admission_id,))
-
-    def add_new_admission(self, admission_date, patient_id, bed_id):
-        query = "INSERT INTO INPATIENT_ADMISSIONS (Admission_Date, Patient_ID, Bed_ID) VALUES (%s, %s, %s);"
-        return self.execute_write_query(query, (admission_date, patient_id, bed_id))
-
-    def update_admission_info(self, admission_id, admission_date, discharge_date, patient_id, bed_id):
-        query = """
-            UPDATE INPATIENT_ADMISSIONS 
-            SET Admission_Date = %s, Discharge_Date = %s, Patient_ID = %s, Bed_ID = %s 
-            WHERE Admission_ID = %s;
-        """
-        d_date = discharge_date if discharge_date and discharge_date.strip() != "" else None
-        return self.execute_write_query(query, (admission_date, d_date, patient_id, bed_id, admission_id))
-
-    def delete_admission(self, admission_id):
-        query = "DELETE FROM INPATIENT_ADMISSIONS WHERE Admission_ID = %s;"
-        return self.execute_write_query(query, (admission_id,))
-    
-    # -------------------------------------------------------------------------
-    # REPORTS MODULE OPERATIONS (STAGE B QUERIES & STAGE D EXECUTIONS)
-    # -------------------------------------------------------------------------
-
-    def run_report_patients_2024(self):
-        """Execute Stage B Query 1 (EXISTS structure)"""
-        query = """
-            SELECT p.Patient_ID, p.First_Name, p.Last_Name, p.Phone_Number
-            FROM PATIENTS p
-            WHERE EXISTS (
-                SELECT 1 FROM VISITS v 
-                WHERE v.Patient_ID = p.Patient_ID 
-                AND EXTRACT(YEAR FROM v.Visit_Date) = 2024
-            );
-        """
-        return self.execute_read_query(query)
-
-    def run_report_high_billing(self):
-        """Execute Stage B Query 5 (Aggregated grouping constraints)"""
-        query = """
-            SELECT 
-                p.Patient_ID, 
-                p.First_Name || ' ' || p.Last_Name AS Patient_Name, 
-                SUM(i.Total_Amount) AS Total_Billed_Amount
-            FROM PATIENTS p
-            JOIN INVOICES i ON p.Patient_ID = i.Patient_ID
-            GROUP BY p.Patient_ID, p.First_Name, p.Last_Name
-            HAVING SUM(i.Total_Amount) > 1500
-            ORDER BY Total_Billed_Amount DESC;
-        """
-        return self.execute_read_query(query)
 
     def call_get_available_beds_function(self, department_id):
-        """Invoke Stage D get_available_beds database function"""
+        """Invoke Stage D get_available_beds database function."""
         if not self.connection or self.connection.closed:
             self.connect()
         if not self.connection:
@@ -509,7 +206,7 @@ class DatabaseManager:
             return None
 
     def call_discharge_procedure(self, admission_id):
-        """Invoke Stage D discharge_patient procedure"""
+        """Invoke Stage D discharge_patient procedure."""
         if not self.connection or self.connection.closed:
             self.connect()
         if not self.connection:
