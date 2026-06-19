@@ -10,25 +10,27 @@ class EntityDetailPopup(ctk.CTkToplevel):
         self.on_modified_callback = on_modified_callback
 
         self.title(f"Manage Record Instance Details — {cfg['table']}")
-        self.geometry("500x600")
+        self.geometry("520x680")
         self.transient(parent)
-        self.grab_set() # Forces modal view control focus
+        self.grab_set()
 
-        # Main Header Title Label
         ctk.CTkLabel(self, text=f"Reviewing {cfg['table']} [Key ID: {pk_value}]", font=("Arial", 16, "bold")).pack(pady=15)
 
         # Container Frame Setup
-        self.scroll_frame = ctk.CTkScrollableFrame(self, width=440, height=400)
+        self.scroll_frame = ctk.CTkScrollableFrame(self, width=460, height=360)
         self.scroll_frame.pack(pady=10, fill="both", expand=True, padx=20)
 
         self.input_widgets = {}
         self.fetch_and_populate_record_fields()
 
+        # 3. INTERCEPT WORKFLOW: Add dynamic call to run Stage D Procedure if viewing a Scheduled Appointment
+        if cfg["table"] == "APPOINTMENTS" and getattr(self, 'current_record_status', '') == "Scheduled":
+            self.setup_procedure_action_button()
+
         # Action Buttons Layout Frame Setup
         self.actions_frame = ctk.CTkFrame(self, fg_color="transparent")
         self.actions_frame.pack(fill="x", pady=20, padx=20)
 
-        # Close/Back Navigation arrow alternate behavior
         self.btn_back = ctk.CTkButton(self.actions_frame, text="← Return Back", command=self.destroy, width=110, fg_color="gray")
         self.btn_back.pack(side="left", padx=5)
 
@@ -40,7 +42,6 @@ class EntityDetailPopup(ctk.CTkToplevel):
         self.btn_delete.pack(side="right", padx=5)
 
     def fetch_and_populate_record_fields(self):
-        # Always read fresh values from Database directly using standard atomic primary key selectors
         query = f"SELECT * FROM {self.cfg['table']} WHERE {self.cfg['pk']} = %s"
         record = self.db_manager.fetch_one(query, (self.pk_value,))
 
@@ -49,18 +50,53 @@ class EntityDetailPopup(ctk.CTkToplevel):
             self.destroy()
             return
 
+        # Cache variables safely to intercept active operational states
+        if "status" in record:
+            self.current_record_status = str(record["status"])
+        if "patient_id" in record:
+            self.current_patient_id = record["patient_id"]
+
         for col, label in zip(self.cfg["cols"], self.cfg["labels"]):
             ctk.CTkLabel(self.scroll_frame, text=f"{label}:", font=("Arial", 12, "bold")).pack(anchor="w", padx=20, pady=(8, 2))
             
-            entry = ctk.CTkEntry(self.scroll_frame, width=380)
+            entry = ctk.CTkEntry(self.scroll_frame, width=400)
             entry.insert(0, str(record.get(col.lower(), "")))
             
-            # Primary Key elements are blocked out explicitly from arbitrary edits
             if col.lower() == self.cfg["pk"].lower() or not self.cfg["write"]:
                 entry.configure(state="disabled")
 
             entry.pack(anchor="w", padx=20, pady=2)
             self.input_widgets[col] = entry
+
+    def setup_procedure_action_button(self):
+        """Injects a special operational process button directly inside the specific entity record window."""
+        proc_frame = ctk.CTkFrame(self, fg_color="#1e2d24", corner_radius=10)
+        proc_frame.pack(fill="x", padx=20, pady=10)
+        
+        ctk.CTkLabel(proc_frame, text="Active Appointment Closing Actions Available:", font=("Arial", 12, "bold"), text_color="lightgreen").pack(pady=5)
+        
+        btn_proc = ctk.CTkButton(proc_frame, text="⚡ Complete & Close Appointment Process", 
+                                 command=self.launch_integrated_procedure_wizard, fg_color="green", font=("Arial", 13, "bold"))
+        btn_proc.pack(pady=(0, 10), padx=20, fill="x")
+
+    def launch_integrated_procedure_wizard(self):
+        # Dynamically forward parameters straight into the modal sub-wizard window
+        patient_id_val = getattr(self, 'current_patient_id', None)
+        
+        # Self-resolve Display Patient Name for aesthetic title continuity
+        p_name = "Patient Record"
+        if patient_id_val:
+            p_row = self.db_manager.fetch_one("SELECT First_Name, Last_Name FROM PATIENTS WHERE Patient_ID = %s", (patient_id_val,))
+            if p_row:
+                p_name = f"{p_row['first_name']} {p_row['last_name']}"
+
+        # Open transactional dialogue window
+        from views.special_operations_view import PopupCompletionWindow
+        PopupCompletionWindow(self, self.pk_value, patient_id_val, p_name, self.db_manager, on_done_callback=self._on_procedure_finished_sync)
+
+    def _on_procedure_finished_sync(self):
+        self.on_modified_callback()
+        self.destroy()
 
     def execute_update_action(self):
         update_clauses = []
@@ -72,7 +108,7 @@ class EntityDetailPopup(ctk.CTkToplevel):
             update_clauses.append(f"{col} = %s")
             values.append(widget.get())
 
-        values.append(self.pk_value) # For WHERE clause restriction filter
+        values.append(self.pk_value)
         sql = f"UPDATE {self.cfg['table']} SET {', '.join(update_clauses)} WHERE {self.cfg['pk']} = %s"
 
         try:
