@@ -3,12 +3,15 @@
 ---
 
 ## 1. Tools & Workflow
-* **Language & UI Framework:** Python 3.10+ using the `customtkinter` library to build a modern, responsive Graphical User Interface.
+* **Language & UI Framework:** Python 3.10+ using the `customtkinter` library to build a modern, high-contrast, and responsive Graphical User Interface.
 * **Database & Driver:** Cloud-hosted PostgreSQL via **Supabase**, utilizing the `psycopg2` driver for secure, direct database communication.
 * **Workflow Architecture:**
-  - **CRUD Operations:** Designed full insert, read, update, and delete screens across all 11 tables using a unified auto-increment ID generation policy.
-  - **Data Integration (Foreign Keys):** Implemented relational SQL `JOIN` statements across all views to display descriptive names (e.g., patient names, department names, room numbers) instead of raw numeric IDs.
-  - **Advanced Components Integration:** Embedded direct operational hooks to trigger complex analytical queries from Stage B, alongside the execution of transactions, stored procedures, and scalar functions from Stage D.
+  - **Direct Menu Access:** Eliminated unnecessary welcome gateways to boot the application directly into a clean, 2-button structural routing panel.
+  - **Dynamic Metadata CRUD:** Engineered generic insert, read, update, and delete workspaces across all 11 tables powered by dynamic data dictionary configurations.
+  - **Advanced Textual Joins:** Resolved raw numeric foreign keys automatically using relational SQL `JOIN` subqueries to fetch and display human-readable descriptive text in popups.
+  - **Targeted Filter Engine:** Replaced loose global string scanning with dedicated dropdown search filters, forcing strict absolute matching (`==`) for database identifier keys (IDs).
+  - **Structured Input Splitters:** Bypassed slow calendar widgets by rendering separate typographic text fields for Day (DD), Month (MM), Year (YYYY), and Time (HH:MM) which automatically compile into standard database timestamps.
+  - **Separation of Concerns:** Encapsulated all stored procedures, relational functions, and heavy analytic aggregations cleanly inside the `DatabaseManager` layer to decouple the UI from raw SQL execution.
 
 ---
 
@@ -17,21 +20,24 @@
 ### Prerequisites
 1. Install the required Python libraries:
 
-  ```bash
-   pip install -r requirements.txt
-  ```
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 2. Ensure your .env file is present in the root directory with valid Supabase credentials:
-  ```bash
-   DB_HOST=
-   DB_NAME=
-   DB_USER=
-   DB_PASSWORD=
-   DB_PORT=
-   ```
+
+    ```bash
+    DB_HOST=
+    DB_NAME=
+    DB_USER=
+    DB_PASSWORD=
+    DB_PORT=
+    ```
 
 ### Execution
+
 Run the following command from the terminal inside the Stage_E directory:
+
 ```bash
 python src/main.py
 ```
@@ -40,44 +46,23 @@ python src/main.py
 
 ## 3. Application Screenshots
 
-### System Screens
+#### 1. Main Menu Hub Screen
+![Main Menu Hub View](./images/main_menu_view.png)
 
-#### Welcome Gate Screen
-![Welcome Gate View](./images/welcome_view.png)
+#### 2. Patients Directory Workspace Screen (CRUD)
+![Patients CRUD View](./images/patients_crud_view.png)
 
-#### Patient Management Screen
-![Patients View](./images/patients_view.png)
+#### 3. Patient Record Instance Detail Popup
+![Patient Detail Popup](./images/patient_detail_popup.png)
 
-#### Staff & Departments Screen
-![Staff & Departments View](./images/staff_depts_view.png)
+#### 4. Scheduled Appointment Detail Popup
+![Appointment Detail Popup](./images/appointment_detail_popup.png)
 
-#### Appointments & Visits Screen
-![Appointments & Visits View](./images/outpatient_view.png)
+#### 5. Appointment Completion Popup
+![Appointment Completion Popup](./images/appointment_completion_popup.png)
 
-#### Inpatient & Wards Screen
-![Inpatient & Wards View](./images/inpatient_view.png)
+#### 6. Special Operations Screeb Tab 1 (Discharge & Bed Count)
+![Admissions & Beds Tab View](./images/special_operations_view_tab_1.png)
 
-#### Pharmacy Screen
-![Pharmacy View](./images/pharmacy_view.png)
-
-#### Billing & Invoices Screen
-![Billing & Invoices View](./images/billing_view.png)
-
-#### Reports & Operations Screen
-![Reports & Operations View](./images/reports_view.png)
-
----
-
-### Database Operations In The Reports & Operations Screen
-
-#### Stage B Query 1 (2024 Active Patients)
-![Query 1](./images/2024_active_patients.png)
-
-#### Stage B Query 5 (High Financial Billings)
-![Query 5](./images/high_financial_billings.png)
-
-#### Stage D Function (Calculate Available Beds)
-![Get Available Beds](./images/get_available_beds.png)
-
-#### Stage D Procedure (Discharge & Liberate Bed)
-![Discharge Patient](./images/discharge_patient.png)
+#### 7. Special Operations Screeb Tab 2 (Analytics Reports)
+![Analytics Reports Tab View](./images/special_operations_view_tab_2.png)

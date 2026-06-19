@@ -23,7 +23,7 @@ class EntityDetailPopup(ctk.CTkToplevel):
         self.input_widgets = {}
         self.fetch_and_populate_record_fields()
 
-        # 3. INTERCEPT WORKFLOW: Add dynamic call to run Stage D Procedure if viewing a Scheduled Appointment
+        # INTERCEPT WORKFLOW: Add dynamic call to run Stage D Procedure if viewing a Scheduled Appointment
         if cfg["table"] == "APPOINTMENTS" and getattr(self, 'current_record_status', '') == "Scheduled":
             self.setup_procedure_action_button()
 
@@ -42,7 +42,11 @@ class EntityDetailPopup(ctk.CTkToplevel):
         self.btn_delete.pack(side="right", padx=5)
 
     def fetch_and_populate_record_fields(self):
-        query = f"SELECT * FROM {self.cfg['table']} WHERE {self.cfg['pk']} = %s"
+        if "select_query" in self.cfg:
+            query = f"SELECT * FROM ({self.cfg['select_query']}) AS sub WHERE sub.{self.cfg['pk']} = %s"
+        else:
+            query = f"SELECT * FROM {self.cfg['table']} WHERE {self.cfg['pk']} = %s"
+            
         record = self.db_manager.fetch_one(query, (self.pk_value,))
 
         if not record:
@@ -50,7 +54,6 @@ class EntityDetailPopup(ctk.CTkToplevel):
             self.destroy()
             return
 
-        # Cache variables safely to intercept active operational states
         if "status" in record:
             self.current_record_status = str(record["status"])
         if "patient_id" in record:
@@ -70,29 +73,27 @@ class EntityDetailPopup(ctk.CTkToplevel):
 
     def setup_procedure_action_button(self):
         """Injects a special operational process button directly inside the specific entity record window."""
-        proc_frame = ctk.CTkFrame(self, fg_color="#1e2d24", corner_radius=10)
+        proc_frame = ctk.CTkFrame(self, corner_radius=10)
         proc_frame.pack(fill="x", padx=20, pady=10)
         
-        ctk.CTkLabel(proc_frame, text="Active Appointment Closing Actions Available:", font=("Arial", 12, "bold"), text_color="lightgreen").pack(pady=5)
+        ctk.CTkLabel(proc_frame, text="Active Appointment Closing Actions Available:", font=("Arial", 12, "bold")).pack(pady=5)
         
         btn_proc = ctk.CTkButton(proc_frame, text="⚡ Complete & Close Appointment Process", 
                                  command=self.launch_integrated_procedure_wizard, fg_color="green", font=("Arial", 13, "bold"))
         btn_proc.pack(pady=(0, 10), padx=20, fill="x")
 
     def launch_integrated_procedure_wizard(self):
-        # Dynamically forward parameters straight into the modal sub-wizard window
         patient_id_val = getattr(self, 'current_patient_id', None)
         
-        # Self-resolve Display Patient Name for aesthetic title continuity
         p_name = "Patient Record"
         if patient_id_val:
             p_row = self.db_manager.fetch_one("SELECT First_Name, Last_Name FROM PATIENTS WHERE Patient_ID = %s", (patient_id_val,))
             if p_row:
                 p_name = f"{p_row['first_name']} {p_row['last_name']}"
 
-        # Open transactional dialogue window
-        from views.special_operations_view import PopupCompletionWindow
-        PopupCompletionWindow(self, self.pk_value, patient_id_val, p_name, self.db_manager, on_done_callback=self._on_procedure_finished_sync)
+        # UPDATED: Routes the import and initialization to the newly renamed AppointmentCompletionPopup component
+        from views.appointment_completion_popup import AppointmentCompletionPopup
+        AppointmentCompletionPopup(self, self.pk_value, patient_id_val, p_name, self.db_manager, on_done_callback=self._on_procedure_finished_sync)
 
     def _on_procedure_finished_sync(self):
         self.on_modified_callback()
@@ -105,6 +106,9 @@ class EntityDetailPopup(ctk.CTkToplevel):
         for col, widget in self.input_widgets.items():
             if col.lower() == self.cfg["pk"].lower():
                 continue
+            if col.lower() in ["department_name", "room_number", "bed_number", "patient_name", "staff_name", "medication_name"]:
+                continue
+                
             update_clauses.append(f"{col} = %s")
             values.append(widget.get())
 

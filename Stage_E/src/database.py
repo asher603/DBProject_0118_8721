@@ -221,3 +221,32 @@ class DatabaseManager:
             print(f"Error calling discharge_patient procedure: {e}")
             self.connection.rollback()
             return False
+        
+    def get_top_billing_patients(self):
+        """Fetch patients with total combined invoice amounts greater than 1500."""
+        sql = """
+            SELECT 
+                p.First_Name, p.Last_Name, p.Phone_Number, 
+                SUM(i.Total_Amount) as Total_Billed,
+                COUNT(i.Invoice_ID) as Invoice_Count
+            FROM PATIENTS p
+            JOIN INVOICES i ON p.Patient_ID = i.Patient_ID
+            GROUP BY p.Patient_ID, p.First_Name, p.Last_Name, p.Phone_Number
+            HAVING SUM(i.Total_Amount) > 1500
+            ORDER BY Total_Billed DESC;
+        """
+        return self.fetch_all(sql)
+
+    def get_monthly_average_stays(self):
+        """Fetch average length of stay (in days) grouped by admission Year and Month."""
+        sql = """
+            SELECT 
+                EXTRACT(YEAR FROM Admission_Date) AS Year,
+                EXTRACT(MONTH FROM Admission_Date) AS Month,
+                COUNT(Admission_ID) AS Total_Admissions,
+                ROUND(AVG(Discharge_Date - Admission_Date), 2) AS Avg_Stay_Days
+            FROM INPATIENT_ADMISSIONS
+            GROUP BY EXTRACT(YEAR FROM Admission_Date), EXTRACT(MONTH FROM Admission_Date)
+            ORDER BY Year DESC, Month DESC;
+        """
+        return self.fetch_all(sql)

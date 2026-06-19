@@ -8,7 +8,7 @@ class GenericCrudView(ctk.CTkFrame):
         self.db_manager = db_manager
         self.on_back_click = on_back_click
         
-        # 1. Config map with explicit sorting logic and per-column search criteria filters
+        # Config map with explicit sorting logic and per-column search criteria filters
         self.entity_config = {
             "Patients": {
                 "table": "PATIENTS", "pk": "patient_id", 
@@ -62,7 +62,7 @@ class GenericCrudView(ctk.CTkFrame):
                 "table": "APPOINTMENTS", "pk": "appointment_id", 
                 "cols": ["appointment_id", "appointment_date", "patient_name", "staff_name", "room_number", "status"], 
                 "labels": ["Appt ID", "Date", "Patient", "Doctor/Staff", "Room", "Status"], "write": True,
-                "select_query": "SELECT a.Appointment_ID, a.Appointment_Date, (p.First_Name || ' ' || p.Last_Name) as patient_name, (s.First_Name || ' ' || s.Last_Name) as staff_name, r.Room_Number, a.Status FROM APPOINTMENTS a JOIN PATIENTS p ON a.Patient_ID = p.Patient_ID JOIN STAFF s ON a.Employee_ID = s.Employee_ID JOIN ROOMS r ON a.Room_ID = r.Room_ID",
+                "select_query": "SELECT a.Appointment_ID, a.Patient_ID, a.Appointment_Date, (p.First_Name || ' ' || p.Last_Name) as patient_name, (s.First_Name || ' ' || s.Last_Name) as staff_name, r.Room_Number, a.Status FROM APPOINTMENTS a JOIN PATIENTS p ON a.Patient_ID = p.Patient_ID JOIN STAFF s ON a.Employee_ID = s.Employee_ID JOIN ROOMS r ON a.Room_ID = r.Room_ID",
                 "fk_fields": {"Patient": "SELECT Patient_ID, (First_Name || ' ' || Last_Name) FROM PATIENTS", "Staff": "SELECT Employee_ID, (First_Name || ' ' || Last_Name) FROM STAFF", "Room": "SELECT Room_ID, Room_Number FROM ROOMS"},
                 "sort_order": "a.Appointment_Date DESC",
                 "search_filters": {"Appointment ID": "appointment_id", "Patient Name": "patient_name", "Status": "status"}
@@ -129,7 +129,7 @@ class GenericCrudView(ctk.CTkFrame):
         self.load_current_entity_data()
 
     def setup_list_tab(self):
-        # 2. Rebuilt targeted Filter Sub-bar layout with Column dropdown routing
+        # Rebuilt targeted Filter Sub-bar layout with Column dropdown routing
         self.search_frame = ctk.CTkFrame(self.tab_list, fg_color="transparent")
         self.search_frame.pack(fill="x", padx=10, pady=10)
 
@@ -145,7 +145,7 @@ class GenericCrudView(ctk.CTkFrame):
         # Treeview Styles and Setup
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure("Treeview", background="#2a2a2a", foreground="white", fieldbackground="#2a2a2a", rowheight=28)
+        style.configure("Treeview", background="white", foreground="black", fieldbackground="white", rowheight=28)
         style.map("Treeview", background=[("selected", "#1f538d")])
 
         self.tree_frame = ctk.CTkFrame(self.tab_list)
@@ -268,9 +268,40 @@ class GenericCrudView(ctk.CTkFrame):
                         break
 
             if not fk_found:
-                entry = ctk.CTkEntry(scroll_form, width=350, placeholder_text=f"Enter {label}")
-                entry.pack(anchor="w", padx=30, pady=5)
-                self.form_inputs[col] = entry
+                # 2. FIX: Check if field is a Date or DateTime and split inputs into structured typing slots
+                if "date" in col.lower() or "dob" in col.lower():
+                    date_frame = ctk.CTkFrame(scroll_form, fg_color="transparent")
+                    date_frame.pack(anchor="w", padx=30, pady=5)
+                    
+                    entry_d = ctk.CTkEntry(date_frame, width=45, placeholder_text="DD")
+                    entry_d.pack(side="left", padx=2)
+                    ctk.CTkLabel(date_frame, text="/").pack(side="left")
+                    
+                    entry_m = ctk.CTkEntry(date_frame, width=45, placeholder_text="MM")
+                    entry_m.pack(side="left", padx=2)
+                    ctk.CTkLabel(date_frame, text="/").pack(side="left")
+                    
+                    entry_y = ctk.CTkEntry(date_frame, width=65, placeholder_text="YYYY")
+                    entry_y.pack(side="left", padx=2)
+                    
+                    entry_t = None
+                    # If it's a full medical log timestamp (not DOB), append Time typed slots
+                    if "birth" not in col.lower() and "dob" not in col.lower():
+                        ctk.CTkLabel(date_frame, text="  Time (HH:MM):").pack(side="left", padx=(5, 2))
+                        entry_t = ctk.CTkEntry(date_frame, width=60, placeholder_text="12:00")
+                        entry_t.pack(side="left", padx=2)
+                        
+                    self.form_inputs[col] = {
+                        "is_date": True,
+                        "day": entry_d,
+                        "month": entry_m,
+                        "year": entry_y,
+                        "time": entry_t
+                    }
+                else:
+                    entry = ctk.CTkEntry(scroll_form, width=350, placeholder_text=f"Enter {label}")
+                    entry.pack(anchor="w", padx=30, pady=5)
+                    self.form_inputs[col] = entry
 
         btn_save = ctk.CTkButton(self.tab_create, text=f"Save New {self.entity_dropdown.get()} Record", 
                                  command=lambda: self.submit_new_record(cfg), fg_color="green", font=("Arial", 14, "bold"))
@@ -290,13 +321,36 @@ class GenericCrudView(ctk.CTkFrame):
             if col == "staff_name": db_col_name = "employee_id"
             if col == "medication_name": db_col_name = "medication_id"
 
-            val = widget.get()
-            if not val:
-                messagebox.showerror("Validation Error", f"Field '{col}' cannot be left blank.")
-                return
-            
-            if col in self.fk_mappings:
-                val = self.fk_mappings[col].get(val)
+            # 2. FIX: Reconstruct and format components back to native SQL structure safely
+            if isinstance(widget, dict) and widget.get("is_date"):
+                d = widget["day"].get().strip()
+                m = widget["month"].get().strip()
+                y = widget["year"].get().strip()
+                if not d or not m or not y:
+                    messagebox.showerror("Validation Error", f"Please fill out all date components (DD/MM/YYYY) for '{col}'.")
+                    return
+                
+                date_part = f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+                
+                if widget["time"]:
+                    t = widget["time"].get().strip()
+                    if not t:
+                        messagebox.showerror("Validation Error", f"Please enter a time (HH:MM) for '{col}'.")
+                        return
+                    if ":" not in t:
+                        messagebox.showerror("Validation Error", f"Time format for '{col}' must be HH:MM.")
+                        return
+                    val = f"{date_part} {t}:00"
+                else:
+                    val = date_part
+            else:
+                val = widget.get()
+                if not val:
+                    messagebox.showerror("Validation Error", f"Field '{col}' cannot be left blank.")
+                    return
+                
+                if col in self.fk_mappings:
+                    val = self.fk_mappings[col].get(val)
 
             fields.append(db_col_name)
             placeholders.append("%s")
